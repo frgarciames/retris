@@ -7,7 +7,7 @@
 Race the clock to clear your target lines, then watch any run back frame-for-frame.
 Every leaderboard time is recomputed on the server from the recorded inputs — so the ranking is honest by construction.
 
-Built on [**Remix 3**](https://remix.run) (beta) · zero runtime dependencies beyond `remix` · powered by Node's built-in SQLite.
+Built on [**Remix 3**](https://remix.run) (beta) · powered by Node's built-in SQLite in dev and [**Turso**](https://turso.tech) (libSQL) in production.
 
 </div>
 
@@ -56,12 +56,12 @@ That one property is what makes everything else simple:
 | ------------ | ---------------------------------------------------------------------- |
 | Framework    | **Remix 3** (beta) — server-first, Web-API based, its own UI runtime (not React) |
 | Runtime      | **Node ≥ 24.3** with the experimental built-in `node:sqlite`           |
-| Database     | SQLite via `remix/data-table` + hand-written SQL migrations            |
+| Database     | SQLite via `remix/data-table` + hand-written SQL migrations — a local `node:sqlite` file in dev, **[Turso](https://turso.tech)** (libSQL embedded replica via `libsql`) in production |
 | Auth         | Session cookies + `node:crypto` scrypt password hashing                |
 | Styling      | `css()` mixins (CSS-in-JS, server-rendered, adopted as a stylesheet)   |
 | Package mgr  | **pnpm**                                                               |
 
-There are **no runtime dependencies** other than `remix` itself — the database driver and password hashing both come from the Node standard library.
+The only runtime dependencies are `remix` itself and `libsql` (the Turso/libSQL client, used only when a Turso URL is configured) — in plain local dev the database driver and password hashing both come from the Node standard library.
 
 ---
 
@@ -91,6 +91,8 @@ Migrations run automatically on startup, creating `db/retris.sqlite` on first bo
 | `ADMIN_USERNAME` | `admin@example.test` (dev/test) | Username of the single admin account. **Required in production** (the app refuses to boot without it); dev/test fall back to `admin@example.test`. |
 | `PORT`           | `44100`              | HTTP port.                                                            |
 | `NODE_ENV`       | `development`        | `production` enables secure cookies + minification; `test` uses in-memory DB & sessions. |
+| `TURSO_DATABASE_URL` | _(unset)_        | When set, the app reads/writes through a **Turso** libSQL embedded replica synced from this primary instead of the local SQLite file. Leave unset for a plain local `db/retris.sqlite`. |
+| `TURSO_AUTH_TOKEN` | _(unset)_          | Auth token for the Turso primary referenced by `TURSO_DATABASE_URL`.  |
 
 ---
 
@@ -172,7 +174,8 @@ server.ts               # Node HTTP adapter
 
 ## 🗄️ Database & migrations
 
-- The database lives at `db/retris.sqlite` (git-ignored) and is opened with Node's built-in `node:sqlite`.
+- In local dev the database lives at `db/retris.sqlite` (git-ignored) and is opened with Node's built-in `node:sqlite`.
+- In production, set `TURSO_DATABASE_URL` (+ `TURSO_AUTH_TOKEN`) to back the app with **[Turso](https://turso.tech)**. The app opens a libSQL *embedded replica* (`db/replica.sqlite`) via the `libsql` driver: reads hit the local replica instead of a ~200 ms network round-trip per query, writes are delegated to the Turso primary, and the replica re-syncs every 10 s. Everything still flows through the same synchronous sqlite adapter, so the rest of the code is unchanged.
 - Migrations are plain SQL files under `db/migrations/<timestamp>_<name>/{up,down}.sql`. They are **applied automatically on startup** and tracked by checksum, so they run exactly once.
 - Two tables: **`users`** (id, username, password hash) and **`games`** (the stored replays — seed, mode, recorded actions JSON, plus the server-verified duration and line count).
 
@@ -220,7 +223,8 @@ In production the app:
 
 - **requires** `SESSION_SECRET` and fails fast without it,
 - marks session cookies `Secure` and minifies browser assets,
-- persists sessions to `tmp/sessions/` and the database to `db/retris.sqlite`.
+- persists sessions to `tmp/sessions/`,
+- uses **Turso** (libSQL embedded replica) when `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` are set, falling back to the local `db/retris.sqlite` file otherwise.
 
 ---
 
