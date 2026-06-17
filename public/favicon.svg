@@ -1,11 +1,20 @@
 <svg width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="144" height="144" rx="72" fill="black"/>
-<g clip-path="url(#clip0_2008_2428)">
-<path d="M102.763 51.2382L102.762 51.2391V51.2401C113.767 51.2402 121.369 56.1787 119.744 62.2714L118.643 66.3973C117.017 72.4901 106.778 77.4286 95.7734 77.4286H94.6475L117.765 92.5868H80.6504L61.9629 78.163C61.2148 77.6833 60.3465 77.4286 59.459 77.4286H28.2197L31.1631 66.3954H85.8799C87.9367 66.3954 89.8519 65.4721 90.1562 64.3329H90.1572C90.4613 63.1935 89.0394 62.2694 86.9814 62.2694H32.2646L35.207 51.2382H102.763ZM54.1865 81.2362C55.2231 81.2363 55.9785 82.2245 55.71 83.2303L53.2139 92.5858H24.1768L27.2041 81.2362H54.1865Z" fill="white"/>
-</g>
-<defs>
-<clipPath id="clip0_2008_2428">
-<rect width="96" height="41.5862" fill="white" transform="translate(24 51.2069)"/>
-</clipPath>
-</defs>
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c77af5" />
+      <stop offset="1" stop-color="#a23fe0" />
+    </linearGradient>
+    <!-- A single beveled Tetris block, drawn at the origin and stamped per cell. -->
+    <g id="blk">
+      <rect x="3" y="3" width="30" height="30" rx="6" fill="url(#face)" stroke="#7d2fb0" stroke-width="2" />
+      <rect x="8" y="8" width="20" height="4" rx="2" fill="#ffffff" opacity="0.35" />
+    </g>
+  </defs>
+  <!-- Board-like rounded background -->
+  <rect width="144" height="144" rx="32" fill="#14161d" />
+  <!-- T-tetromino (spawn orientation): top-center cell over a 3-wide row -->
+  <use href="#blk" x="54" y="36" />
+  <use href="#blk" x="18" y="72" />
+  <use href="#blk" x="54" y="72" />
+  <use href="#blk" x="90" y="72" />
 </svg>
