@@ -88,7 +88,7 @@ Migrations run automatically on startup, creating `db/retris.sqlite` on first bo
 | Variable         | Default              | Notes                                                                 |
 | ---------------- | -------------------- | --------------------------------------------------------------------- |
 | `SESSION_SECRET` | insecure dev secret  | Used to sign session cookies. **Required in production** (the app refuses to boot without it). |
-| `ADMIN_USERNAME` | _(none in prod)_     | Username of the single admin account. Unset in production means **no** account is privileged (the admin view 404s); dev/test fall back to `admin@example.test`. |
+| `ADMIN_USERNAME` | `admin@example.test` (dev/test) | Username of the single admin account. **Required in production** (the app refuses to boot without it); dev/test fall back to `admin@example.test`. |
 | `PORT`           | `44100`              | HTTP port.                                                            |
 | `NODE_ENV`       | `development`        | `production` enables secure cookies + minification; `test` uses in-memory DB & sessions. |
 
