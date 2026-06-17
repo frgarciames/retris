@@ -1,0 +1,27 @@
+{
+  "name": "retris",
+  "private": true,
+  "license": "MIT",
+  "description": "A competitive line-sprint Tetris-style game with accounts, server-verified times, and full replays, built on Remix 3.",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env --import remix/node-tsx server.ts",
+    "start": "node --env-file-if-exists=.env --import remix/node-tsx server.ts",
+    "migrate": "node --env-file-if-exists=.env --import remix/node-tsx --eval \"import('./app/data/db.ts').then(m => m.migrate()).then(() => console.log('migrations applied'))\"",
+    "test": "NODE_ENV=test remix test",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=24.3.0"
+  },
+  "dependencies": {
+    "libsql": "^0.5.29",
+    "lucide-remix": "^0.0.5",
+    "remix": "^3.0.0-beta.4"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "playwright": "^1.61.0",
+    "typescript": "latest"
+  }
+}

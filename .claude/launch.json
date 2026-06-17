@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "retris",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "port": 44100,
+      "autoPort": true
+    },
+    {
+      "name": "retris-sandbox",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--import", "remix/node-tsx", "server.ts"],
+      "env": { "NODE_ENV": "test" },
+      "port": 44100,
+      "autoPort": true
+    }
+  ]
+}
