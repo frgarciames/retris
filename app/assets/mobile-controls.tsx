@@ -1,10 +1,9 @@
-import { ChevronDown } from 'lucide-remix/icons/chevron-down';
-import { ChevronLeft } from 'lucide-remix/icons/chevron-left';
-import { ChevronRight } from 'lucide-remix/icons/chevron-right';
-import { ChevronUp } from 'lucide-remix/icons/chevron-up';
 import { addEventListeners, css, on, type Handle } from 'remix/ui'
 
-const SWIPE_MIN = 24
+const SWIPE_MIN = 16
+const JOYSTICK_WIDTH = 132
+const DOT_SIZE = 44
+const DOT_RADIUS = DOT_SIZE / 2
 
 export interface MobileControlsProps {
   disabled?: boolean
@@ -20,38 +19,21 @@ export interface MobileControlsProps {
 }
 
 export function MobileControls(handle: Handle<MobileControlsProps>) {
-  // ----- dpad helpers -----
-
-  function startPress(event: PointerEvent, run: () => void) {
-    if (handle.props.disabled) return
-    event.preventDefault()
-    let button = event.currentTarget as HTMLElement | null
-    button?.setPointerCapture(event.pointerId)
-    run()
-  }
-
-  function stopPress(event: PointerEvent, run: () => void) {
-    event.preventDefault()
-    let button = event.currentTarget as HTMLElement | null
-    if (button?.hasPointerCapture(event.pointerId)) {
-      button.releasePointerCapture(event.pointerId)
-    }
-    run()
-  }
-
   function tap(event: PointerEvent, run: () => void) {
     if (handle.props.disabled) return
     event.preventDefault()
     run()
   }
 
-  // ----- joystick (dpad centre touch area) -----
+  // ----- joystick -----
 
   let joystickId = handle.id + '-joystick'
   let startX = 0
   let startY = 0
-  let currentDir: 'left' | 'right' | 'down' | 'up' | null = null
+  let currentDir: 'left' | 'right' | 'down' | null = null
   let moved = false
+  let dotEl: HTMLElement | null = null
+  let joyRect: { w: number; h: number } = { w: 0, h: 0 }
 
   function releaseJoystick() {
     if (currentDir === 'left') handle.props.onReleaseLeft()
@@ -66,11 +48,28 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
     else handle.props.onPressUp()
   }
 
+  function moveDot(dx: number, dy: number) {
+    if (!dotEl) return
+    let maxX = joyRect.w / 2 - DOT_RADIUS
+    let maxY = joyRect.h - DOT_SIZE
+    let x = Math.max(-maxX, Math.min(maxX, dx))
+    let y = Math.max(0, Math.min(maxY, DOT_RADIUS + dy))
+    dotEl.style.transform = `translate(calc(-50% + ${x}px), ${y - DOT_RADIUS}px)`
+  }
+
+  function resetDot() {
+    if (dotEl) {
+      dotEl.style.transition = 'transform 0.15s ease-out'
+      dotEl.style.transform = 'translate(-50%, 0)'
+    }
+  }
+
   if (typeof document !== 'undefined') {
     addEventListeners(document, handle.signal, {
       touchstart(event) {
         let target = event.target as HTMLElement | null
-        if (!target?.closest(`[data-joystick="${joystickId}"]`)) return
+        let joystick = target?.closest(`[data-joystick="${joystickId}"]`) as HTMLElement | null
+        if (!joystick) return
         if (handle.props.disabled) return
         event.preventDefault()
         let touch = (event as TouchEvent).changedTouches[0]
@@ -79,6 +78,10 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
         startY = touch.clientY
         moved = false
         releaseJoystick()
+        dotEl = joystick.querySelector('[data-joystick-dot]')
+        if (dotEl) dotEl.style.transition = 'none'
+        joyRect.w = joystick.offsetWidth
+        joyRect.h = joystick.offsetHeight
       },
       touchmove(event) {
         let target = event.target as HTMLElement | null
@@ -89,19 +92,16 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
         if (!touch) return
         let dx = touch.clientX - startX
         let dy = touch.clientY - startY
+        moveDot(dx, dy)
         if (Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return
         moved = true
-        let dir: typeof currentDir = null
+        let dir: typeof currentDir
         if (Math.abs(dx) > Math.abs(dy)) {
           dir = dx > 0 ? 'right' : 'left'
         } else {
-          dir = dy > 0 ? 'down' : 'up'
+          dir = dy > 0 ? 'down' : null
         }
-        if (dir === 'up') {
-          if (currentDir !== 'up') handle.props.onDown()
-          currentDir = 'up'
-          return
-        }
+        if (dir === null) return
         if (dir === currentDir) return
         releaseJoystick()
         pressJoystickDir(dir)
@@ -111,13 +111,15 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
         let target = event.target as HTMLElement | null
         if (!target?.closest(`[data-joystick="${joystickId}"]`)) return
         releaseJoystick()
+        resetDot()
         if (!moved && !handle.props.disabled) {
-          handle.props.onA()
+          handle.props.onDown()
         }
         moved = false
       },
       touchcancel() {
         releaseJoystick()
+        resetDot()
         moved = false
       },
     })
@@ -126,103 +128,46 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
   return () => (
     <section mix={rootStyle} aria-label="Touch controls">
       <div mix={shellStyle}>
-        <div mix={dpadStyle}>
-          <div />
-          <button
-            type="button"
-            aria-label="Move up"
-            disabled={handle.props.disabled}
-            mix={[
-              baseButtonStyle,
-              dpadButtonStyle,
-              on('pointerdown', (event) => tap(event, handle.props.onDown)),
-            ]}
-          >
-            <ChevronUp />
-          </button>
-          <div />
-          <button
-            type="button"
-            aria-label="Move left"
-            disabled={handle.props.disabled}
-            mix={[
-              baseButtonStyle,
-              dpadButtonStyle,
-              on('pointerdown', (event) => startPress(event, handle.props.onPressLeft)),
-              on('pointerup', (event) => stopPress(event, handle.props.onReleaseLeft)),
-              on('pointercancel', (event) => stopPress(event, handle.props.onReleaseLeft)),
-              on('lostpointercapture', () => handle.props.onReleaseLeft()),
-            ]}
-          >
-            <ChevronLeft />
-          </button>
-          <div
-            mix={dpadCenterStyle}
-            aria-label="Joystick — drag to move, tap to hard drop"
-            role="button"
-            tabIndex={-1}
-            data-joystick={joystickId}
-          />
-          <button
-            type="button"
-            aria-label="Move right"
-            disabled={handle.props.disabled}
-            mix={[
-              baseButtonStyle,
-              dpadButtonStyle,
-              on('pointerdown', (event) => startPress(event, handle.props.onPressRight)),
-              on('pointerup', (event) => stopPress(event, handle.props.onReleaseRight)),
-              on('pointercancel', (event) => stopPress(event, handle.props.onReleaseRight)),
-              on('lostpointercapture', () => handle.props.onReleaseRight()),
-            ]}
-          >
-            <ChevronRight />
-          </button>
-          <div />
-          <button
-            type="button"
-            aria-label="Rotate piece"
-            disabled={handle.props.disabled}
-            mix={[
-              baseButtonStyle,
-              dpadButtonStyle,
-              on('pointerdown', (event) => startPress(event, handle.props.onPressUp)),
-              on('pointerup', (event) => stopPress(event, handle.props.onReleaseUp)),
-              on('pointercancel', (event) => stopPress(event, handle.props.onReleaseUp)),
-              on('lostpointercapture', () => handle.props.onReleaseUp()),
-            ]}
-          >
-            <ChevronDown />
-          </button>
-          <div />
+        <div
+          mix={joystickStyle}
+          aria-label="Joystick — drag to move, tap to rotate"
+          role="button"
+          tabIndex={-1}
+          data-joystick={joystickId}
+        >
+          <span mix={joystickDotStyle} data-joystick-dot aria-hidden="true" />
+          <div mix={joystickHintStyle} aria-hidden="true">
+            <span>Tap = Rotate</span>
+            <span>Drag = Move</span>
+          </div>
         </div>
 
-        <div mix={actionClusterStyle}>
+        <div mix={actionRowStyle}>
           <button
             type="button"
-            aria-label="B button hold piece"
+            aria-label="Hold piece"
             disabled={handle.props.disabled}
             mix={[
               baseButtonStyle,
-              actionButtonStyle,
+              actionFullButtonStyle,
               holdButtonStyle,
               on('pointerdown', (event) => tap(event, handle.props.onB)),
             ]}
           >
-            B
+            Hold
           </button>
           <button
             type="button"
-            aria-label="A button hard drop"
+            aria-label="Hard drop"
             disabled={handle.props.disabled}
             mix={[
               baseButtonStyle,
-              actionButtonStyle,
+              actionFullButtonStyle,
               accentButtonStyle,
               on('pointerdown', (event) => tap(event, handle.props.onA)),
             ]}
           >
-            A
+            Drop
           </button>
         </div>
       </div>
@@ -241,21 +186,67 @@ const rootStyle = css({
 
 const shellStyle = css({
   display: 'flex',
-  alignItems: 'flex-end',
+  alignItems: 'stretch',
   justifyContent: 'space-between',
-  gap: '6px',
-  padding: '12px 24px',
+  gap: '12px',
+  padding: '12px 18px',
   borderRadius: '26px',
   background: 'color-mix(in srgb, var(--panel) 55%, transparent)',
   boxShadow: 'var(--shadow-panel, none)',
   backdropFilter: 'blur(10px)',
 })
 
-const dpadStyle = css({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 40px)',
-  gridTemplateRows: 'repeat(3, 40px)',
-  gap: '6px',
+const joystickStyle = css({
+  position: 'relative',
+  width: `${JOYSTICK_WIDTH}px`,
+  minHeight: '106px',
+  borderRadius: `0 0 ${JOYSTICK_WIDTH / 2}px ${JOYSTICK_WIDTH / 2}px`,
+  background: 'color-mix(in srgb, var(--bg) 45%, transparent)',
+  border: 'var(--border-w, 1px) solid var(--border)',
+  borderTop: 'none',
+  touchAction: 'none',
+  flexShrink: 0,
+  overflow: 'visible',
+  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.18)',
+})
+
+const joystickDotStyle = css({
+  position: 'absolute',
+  left: '50%',
+  top: '0',
+  transform: 'translate(-50%, 0)',
+  width: `${DOT_SIZE}px`,
+  height: `${DOT_SIZE}px`,
+  borderRadius: '50%',
+  background: 'color-mix(in srgb, var(--text, #f3f6fb) 75%, transparent)',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+  pointerEvents: 'none',
+})
+
+const joystickHintStyle = css({
+  width: '100%',
+  position: 'absolute',
+  bottom: '10px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '2px',
+  fontSize: '10px',
+  fontWeight: 600,
+  letterSpacing: '0.03em',
+  textTransform: 'uppercase',
+  opacity: 0.45,
+  pointerEvents: 'none',
+})
+
+const actionRowStyle = css({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  flex: 1,
+  minWidth: 0,
 })
 
 const baseButtonStyle = css({
@@ -277,43 +268,13 @@ const baseButtonStyle = css({
   '&:disabled': { opacity: 0.45 },
 })
 
-const dpadButtonStyle = css({
-  width: '40px',
-  height: '40px',
-  borderRadius: 'var(--radius-sm, 8px)',
-  fontSize: '26px',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-})
-
-const dpadCenterStyle = css({
-  width: '40px',
-  height: '40px',
-  borderRadius: 'var(--radius-sm, 8px)',
-  background: 'color-mix(in srgb, var(--bg) 45%, transparent)',
-  touchAction: 'none',
-})
-
-const actionClusterStyle = css({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  paddingBottom: '10px',
-  '@media (max-width: 380px)': {
-    gap: '10px',
-    paddingBottom: '8px',
-  },
-})
-
-const actionButtonStyle = css({
-  width: '52px',
-  height: '52px',
-  borderRadius: '50%',
-  fontSize: '28px',
-  boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
-  '@media (max-width: 380px)': {
-    width: '64px',
-    height: '64px',
-  },
+const actionFullButtonStyle = css({
+  width: '100%',
+  flex: 1,
+  borderRadius: 'var(--radius-sm, 10px)',
+  fontSize: '18px',
+  letterSpacing: '0.02em',
+  boxShadow: '0 6px 16px rgba(0,0,0,0.18)',
 })
 
 const holdButtonStyle = css({
@@ -325,7 +286,4 @@ const accentButtonStyle = css({
   borderColor: 'var(--accent)',
   color: 'var(--accent-ink, #04121d)',
   boxShadow: 'var(--glow, none)',
-  position: 'relative',
-  right: '0rem',
-  bottom: '3.5rem'
 })
