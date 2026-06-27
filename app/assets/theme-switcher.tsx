@@ -12,10 +12,18 @@ interface ThemeSwitcherProps extends SerializableProps {
 // swatch click applies the theme's CSS variables to the shell root directly
 // and persists the cookie with a fetch, so nothing navigates or reloads. The
 // form POST (303 back to the Referer) remains as the no-JS fallback.
+function getLiveThemeId(fallback: string): string {
+  if (typeof document === 'undefined') return fallback
+  return document.querySelector<HTMLElement>('[data-theme]')?.dataset.theme || fallback
+}
+
 export const ThemeSwitcher = clientEntry(
   import.meta.url,
   function ThemeSwitcher(handle: Handle<ThemeSwitcherProps>) {
-    let current = handle.props.current
+    // Sync with the live DOM theme so a newly-mounted switcher (for example
+    // the one inside the mobile menu after it re-opens) shows the currently
+    // applied theme even though its prop may be stale.
+    let current = getLiveThemeId(handle.props.current)
 
     function applyTheme(id: string) {
       let theme = getTheme(id)
@@ -54,7 +62,15 @@ export const ThemeSwitcher = clientEntry(
       })
     }
 
-    return () => (
+    return () => {
+      // If another switcher changed the theme while this one was unmounted,
+      // adopt the live theme before rendering.
+      let liveCurrent = getLiveThemeId(handle.props.current)
+      if (liveCurrent !== current) {
+        current = liveCurrent
+      }
+
+      return (
       <form method="post" action={handle.props.action} mix={switcherStyle} aria-label="Theme">
         {THEME_LIST.map((theme) => {
           let active = theme.id === current
@@ -80,8 +96,8 @@ export const ThemeSwitcher = clientEntry(
         })}
       </form>
     )
-  },
-)
+  }
+})
 
 const switcherStyle = css({
   display: 'flex',
