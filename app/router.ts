@@ -7,6 +7,8 @@ import adminController from './actions/admin/controller.tsx'
 import authController from './actions/auth/controller.tsx'
 import authLoginController from './actions/auth/login/controller.tsx'
 import authSignupController from './actions/auth/signup/controller.tsx'
+import authForgotPasswordController from './actions/auth/forgot-password/controller.tsx'
+import authResetPasswordController from './actions/auth/reset-password/controller.tsx'
 import rootController from './actions/controller.tsx'
 import gamesController from './actions/games/controller.tsx'
 import versusController from './actions/versus/controller.tsx'
@@ -39,6 +41,8 @@ router.map(routes, rootController)
 router.map(routes.auth, authController)
 router.map(routes.auth.login, authLoginController)
 router.map(routes.auth.signup, authSignupController)
+router.map(routes.auth.forgotPassword, authForgotPasswordController)
+router.map(routes.auth.resetPassword, authResetPasswordController)
 router.map(routes.games, gamesController)
 router.map(routes.versus, versusController)
 router.map(routes.admin, adminController)
