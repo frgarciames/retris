@@ -19,6 +19,7 @@ import { routes } from '../../routes.ts'
 import {
   readPendingGame,
   shouldReplacePendingClassic,
+  shouldReplacePendingForMode,
   storePendingGame,
 } from '../../utils/pending-game.ts'
 import { ReplayPage } from './replay-page.tsx'
@@ -121,7 +122,10 @@ export default createController(routes.games, {
             pending: false,
             newBest: false,
             rank: null,
-            best: pending ? { level: pending.level, duration_ms: pending.duration_ms } : null,
+            best:
+              pending?.mode === 'classic'
+                ? { level: pending.level, duration_ms: pending.duration_ms }
+                : null,
           })
         }
 
@@ -154,9 +158,12 @@ export default createController(routes.games, {
       }
 
       if (!auth.ok) {
-        // Verified but anonymous: keep it in the session so login/signup can
-        // claim it, and tell the client to prompt for sign-in.
-        storePendingGame(context.get(Session), verified)
+        let session = context.get(Session)
+        let pending = readPendingGame(session)
+        if (!shouldReplacePendingForMode(pending, mode)) {
+          return json({ pending: false, otherPending: true })
+        }
+        storePendingGame(session, verified)
         return json({ pending: true })
       }
 

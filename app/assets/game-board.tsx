@@ -19,6 +19,7 @@ import { isF4Shortcut, shouldRunF4Shortcut } from './shortcuts.ts'
 interface SubmitResult {
   href?: string
   pending?: boolean
+  otherPending?: boolean
   saved?: boolean
   newBest?: boolean
   rank?: number | null
@@ -156,6 +157,7 @@ export const GameBoard = clientEntry(
 
     async function finish() {
       if (!isFinished()) return
+      if (submitState !== 'idle') return
       let finishedRunVersion = runVersion
       let survival = isSurvivalMode(state.mode)
       submitState = 'submitting'
@@ -411,9 +413,13 @@ function FinishOverlay(
       <div mix={overlayTextStyle}>
         <div mix={overlayLabel}>Finished</div>
         <div mix={overlayBig}>{formatTime(elapsedMs)}</div>
-        {submitState === 'done' && result?.pending ? (
+        {submitState === 'done' && (result?.pending || result?.otherPending) ? (
           <>
-            <div mix={overlayMuted}>Sign in to save this run to the leaderboard.</div>
+            <div mix={overlayMuted}>
+              {result?.otherPending
+                ? 'You have an unsaved run in this session. Sign in to save it.'
+                : 'Sign in to save this run to the leaderboard.'}
+            </div>
             <div mix={overlayActions}>
               <a href={signupHref} mix={overlayLink}>
                 Sign up

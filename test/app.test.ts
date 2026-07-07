@@ -237,6 +237,101 @@ describe('classic mode submission', () => {
     assert.equal(data2.saved, false)
     assert.equal(data2.newBest, false)
   })
+
+  it('does not replace a sprint pending run with a classic finish', async () => {
+    let sprint = generateWinningReplay(200)
+    let sprintBody = new FormData()
+    sprintBody.set('seed', String(sprint.seed))
+    sprintBody.set('mode', sprint.mode)
+    sprintBody.set('actions', JSON.stringify(sprint.actions))
+    let sprintRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body: sprintBody }),
+    )
+    assert.equal(sprintRes.status, 200)
+    assert.deepEqual(await sprintRes.json(), { pending: true })
+    let cookie = sessionCookie(sprintRes)
+
+    let classic = generateGameoverReplay(201)
+    let classicBody = new FormData()
+    classicBody.set('seed', String(classic.seed))
+    classicBody.set('mode', classic.mode)
+    classicBody.set('actions', JSON.stringify(classic.actions))
+    let classicRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: classicBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(classicRes.status, 200)
+    let classicData = (await classicRes.json()) as { pending: boolean; newBest: boolean }
+    assert.equal(classicData.pending, false)
+    assert.equal(classicData.newBest, false)
+
+    let signupBody = new FormData()
+    signupBody.set('username', 'guest-cls-blocked')
+    signupBody.set('password', 'hunter2pass')
+    let signupRes = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), {
+        method: 'POST',
+        body: signupBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(signupRes.status, 303)
+    let location = signupRes.headers.get('location') ?? ''
+    assert.match(location, /^\/games\/\d+$/)
+
+    let show = await router.fetch(new Request(url(location)))
+    assert.equal(show.status, 200)
+    let showHtml = await show.text()
+    assert.match(showHtml, /guest-cls-blocked/)
+    assert.match(showHtml, /20 Lines/)
+  })
+
+  it('does not replace a classic pending run with a sprint finish', async () => {
+    let classic = generateGameoverReplay(202)
+    let classicBody = new FormData()
+    classicBody.set('seed', String(classic.seed))
+    classicBody.set('mode', classic.mode)
+    classicBody.set('actions', JSON.stringify(classic.actions))
+    let classicRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body: classicBody }),
+    )
+    assert.equal(classicRes.status, 200)
+    let cookie = sessionCookie(classicRes)
+
+    let sprint = generateWinningReplay(203)
+    let sprintBody = new FormData()
+    sprintBody.set('seed', String(sprint.seed))
+    sprintBody.set('mode', sprint.mode)
+    sprintBody.set('actions', JSON.stringify(sprint.actions))
+    let sprintRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: sprintBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(sprintRes.status, 200)
+    assert.deepEqual(await sprintRes.json(), { pending: false, otherPending: true })
+
+    let signupBody = new FormData()
+    signupBody.set('username', 'guest-spr-blocked')
+    signupBody.set('password', 'hunter2pass')
+    let signupRes = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), {
+        method: 'POST',
+        body: signupBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(signupRes.status, 303)
+    let show = await router.fetch(new Request(url(signupRes.headers.get('location') ?? '')))
+    let showHtml = await show.text()
+    assert.match(showHtml, /guest-spr-blocked/)
+    assert.match(showHtml, /Classic/)
+  })
 })
 
 describe('admin', () => {

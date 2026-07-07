@@ -35,11 +35,22 @@ export function readPendingGame(session: Session): PendingGame | null {
   return (session.get(KEY) as PendingGame | undefined) ?? null
 }
 
+// The session holds one pending run. Only replace it with a finish in the same
+// mode (classic compares scores; sprint modes replace same-mode pending).
+export function shouldReplacePendingForMode(
+  pending: PendingGame | null,
+  mode: string,
+): boolean {
+  if (!pending) return true
+  return pending.mode === mode
+}
+
 export function shouldReplacePendingClassic(
   pending: PendingGame | null,
   candidate: { level: number; duration_ms: number },
 ): boolean {
-  if (!pending || pending.mode !== 'classic') return true
+  if (!pending) return true
+  if (pending.mode !== 'classic') return false
   return beatsClassicScore(candidate, pending)
 }
 
