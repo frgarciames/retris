@@ -24,8 +24,10 @@ export default createController(routes.auth.login, {
     async index(context) {
       let returnTo = context.url.searchParams.get('returnTo') ?? undefined
       let theme = await readTheme(context.request)
+      let session = context.get(Session)
+      let notice = session.get('notice') as string | undefined
       return context.render(
-        <AuthPage mode="login" returnTo={returnTo} theme={theme} />,
+        <AuthPage mode="login" returnTo={returnTo} notice={notice} theme={theme} />,
       )
     },
 

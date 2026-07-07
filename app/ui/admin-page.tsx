@@ -60,6 +60,7 @@ export function AdminPage(handle: Handle<AdminPageProps>) {
                 <tr>
                   <th mix={thStyle}>ID</th>
                   <th mix={thStyle}>Username</th>
+                  <th mix={thStyle}>Email</th>
                   <th mix={[thStyle, rightStyle]}>Games</th>
                   <th mix={thStyle}>Created</th>
                   <th mix={[thStyle, rightStyle]}>Actions</th>
@@ -70,6 +71,7 @@ export function AdminPage(handle: Handle<AdminPageProps>) {
                   <tr key={row.id} mix={rowStyle}>
                     <td mix={[tdStyle, mutedCellStyle]}>{row.id}</td>
                     <td mix={tdStyle}>{row.username}</td>
+                    <td mix={[tdStyle, mutedCellStyle]}>{row.email ?? '—'}</td>
                     <td mix={[tdStyle, rightStyle]}>{gameCount}</td>
                     <td mix={[tdStyle, mutedCellStyle]}>{formatDate(row.created_at)}</td>
                     <td mix={[tdStyle, rightStyle]}>

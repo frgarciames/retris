@@ -98,7 +98,7 @@ export default createController(routes, {
       let theme = await readTheme(context.request)
       return context.render(
         <ProfilePage
-          user={{ username: auth.identity.username }}
+          user={{ username: auth.identity.username, email: auth.identity.email }}
           theme={theme}
           games={games}
         />,

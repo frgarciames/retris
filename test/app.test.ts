@@ -7,6 +7,8 @@ import { themeCookie } from '../app/middleware/theme.ts'
 import { router } from '../app/router.ts'
 import { routes } from '../app/routes.ts'
 import { ADMIN_USERNAME } from '../app/utils/admin.ts'
+import { clearSentMails, sentMails } from '../app/mail/index.ts'
+import { verifyPassword } from '../app/utils/passwords.ts'
 import { generateWinningReplay } from './win-replay.ts'
 import { generateGameoverReplay } from './gameover-replay.ts'
 
@@ -18,9 +20,18 @@ function sessionCookie(res: Response): string {
   return setCookie.split(';')[0]! // "session=..."
 }
 
-async function signup(username: string, password = 'hunter2pass'): Promise<Response> {
+function testEmail(username: string): string {
+  return username.includes('@') ? username : `${username}@example.test`
+}
+
+async function signup(
+  username: string,
+  password = 'hunter2pass',
+  email?: string,
+): Promise<Response> {
   let body = new FormData()
   body.set('username', username)
+  body.set('email', email ?? testEmail(username))
   body.set('password', password)
   return router.fetch(
     new Request(url(routes.auth.signup.action.href()), { method: 'POST', body }),
@@ -45,6 +56,26 @@ describe('auth + game submission', () => {
     let again = await signup('bob')
     assert.equal(again.status, 400)
     assert.match(await again.text(), /taken/i)
+  })
+
+  it('requires email on signup and persists it', async () => {
+    let res = await signup('email-user', 'hunter2pass', 'email-user@example.test')
+    assert.equal(res.status, 303)
+    let user = await findByUsername(db, 'email-user')
+    assert.equal(user?.email, 'email-user@example.test')
+  })
+
+  it('rejects duplicate email', async () => {
+    await signup('user-a', 'hunter2pass', 'dup@example.test')
+    let body = new FormData()
+    body.set('username', 'user-b')
+    body.set('email', 'dup@example.test')
+    body.set('password', 'hunter2pass')
+    let res = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), { method: 'POST', body }),
+    )
+    assert.equal(res.status, 400)
+    assert.match(await res.text(), /email/i)
   })
 
   it('serves the game to anonymous visitors on the home page', async () => {
@@ -82,6 +113,7 @@ describe('auth + game submission', () => {
     // replay page.
     let signupBody = new FormData()
     signupBody.set('username', 'guest-grace')
+    signupBody.set('email', 'guest-grace@example.test')
     signupBody.set('password', 'hunter2pass')
     let signupRes = await router.fetch(
       new Request(url(routes.auth.signup.action.href()), {
@@ -270,6 +302,7 @@ describe('classic mode submission', () => {
 
     let signupBody = new FormData()
     signupBody.set('username', 'guest-cls-blocked')
+    signupBody.set('email', 'guest-cls-blocked@example.test')
     signupBody.set('password', 'hunter2pass')
     let signupRes = await router.fetch(
       new Request(url(routes.auth.signup.action.href()), {
@@ -318,6 +351,7 @@ describe('classic mode submission', () => {
 
     let signupBody = new FormData()
     signupBody.set('username', 'guest-spr-blocked')
+    signupBody.set('email', 'guest-spr-blocked@example.test')
     signupBody.set('password', 'hunter2pass')
     let signupRes = await router.fetch(
       new Request(url(routes.auth.signup.action.href()), {
@@ -459,5 +493,90 @@ describe('admin', () => {
     )
     assert.equal(res.status, 400)
     assert.ok(await findByUsername(db, ADMIN_USERNAME))
+  })
+})
+
+describe('password recovery', () => {
+  function resetTokenFromMail(): string {
+    let html = sentMails.at(-1)?.html ?? ''
+    let match = html.match(/reset-password\/([^"]+)/)
+    assert.ok(match, 'expected reset link in sent mail')
+    return match[1]!
+  }
+
+  it('shows the same forgot-password message whether or not the email exists', async () => {
+    clearSentMails()
+    await signup('forgot-known')
+
+    let knownBody = new FormData()
+    knownBody.set('email', testEmail('forgot-known'))
+    let knownRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: knownBody,
+      }),
+    )
+    assert.equal(knownRes.status, 200)
+    assert.match(await knownRes.text(), /If an account exists/i)
+    assert.equal(sentMails.length, 1)
+
+    let unknownBody = new FormData()
+    unknownBody.set('email', 'nobody@example.test')
+    let unknownRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: unknownBody,
+      }),
+    )
+    assert.equal(unknownRes.status, 200)
+    assert.match(await unknownRes.text(), /If an account exists/i)
+    assert.equal(sentMails.length, 1)
+  })
+
+  it('resets password with a valid token', async () => {
+    clearSentMails()
+    await signup('reset-user', 'old-password')
+
+    let forgotBody = new FormData()
+    forgotBody.set('email', testEmail('reset-user'))
+    let forgotRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: forgotBody,
+      }),
+    )
+    assert.equal(forgotRes.status, 200)
+    let token = resetTokenFromMail()
+
+    let resetBody = new FormData()
+    resetBody.set('password', 'new-password')
+    let resetRes = await router.fetch(
+      new Request(url(routes.auth.resetPassword.action.href({ token })), {
+        method: 'POST',
+        body: resetBody,
+      }),
+    )
+    assert.equal(resetRes.status, 303)
+    assert.equal(resetRes.headers.get('location'), routes.auth.login.index.href())
+
+    let user = await findByUsername(db, 'reset-user')
+    assert.ok(user)
+    assert.equal(await verifyPassword('new-password', user.password_hash), true)
+
+    let loginBody = new FormData()
+    loginBody.set('username', 'reset-user')
+    loginBody.set('password', 'new-password')
+    let loginRes = await router.fetch(
+      new Request(url(routes.auth.login.action.href()), { method: 'POST', body: loginBody }),
+    )
+    assert.equal(loginRes.status, 303)
+  })
+
+  it('rejects an invalid reset token', async () => {
+    let res = await router.fetch(
+      new Request(url(routes.auth.resetPassword.index.href({ token: 'not-a-real-token' }))),
+    )
+    assert.equal(res.status, 400)
+    assert.match(await res.text(), /invalid or has expired/i)
   })
 })

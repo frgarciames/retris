@@ -19,6 +19,7 @@ function sessionCookie(res: Response): string {
 async function signup(username: string, password = 'hunter2pass'): Promise<Response> {
   let body = new FormData()
   body.set('username', username)
+  body.set('email', username.includes('@') ? username : `${username}@example.test`)
   body.set('password', password)
   return router.fetch(
     new Request(url(routes.auth.signup.action.href()), { method: 'POST', body }),

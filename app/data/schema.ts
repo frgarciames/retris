@@ -10,7 +10,19 @@ export const users = table({
   columns: {
     id: c.integer().primaryKey().autoIncrement(),
     username: c.text().notNull().unique(),
+    email: c.text().unique().nullable(),
     password_hash: c.text().notNull(),
+    created_at: c.integer().notNull(),
+  },
+})
+
+export const passwordResetTokens = table({
+  name: 'password_reset_tokens',
+  columns: {
+    id: c.integer().primaryKey().autoIncrement(),
+    user_id: c.integer().notNull().references('users', 'id'),
+    token_hash: c.text().notNull().unique(),
+    expires_at: c.integer().notNull(),
     created_at: c.integer().notNull(),
   },
 })
@@ -65,5 +77,6 @@ export const versusGames = table({
 })
 
 export type User = TableRow<typeof users>
+export type PasswordResetToken = TableRow<typeof passwordResetTokens>
 export type Game = TableRow<typeof games>
 export type VersusGame = TableRow<typeof versusGames>

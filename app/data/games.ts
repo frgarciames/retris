@@ -37,7 +37,10 @@ export async function updateGame(
   id: number,
   data: Omit<NewGame, 'user_id'>,
 ): Promise<void> {
-  await db.update(games, id, { ...data, created_at: Date.now() })
+  // updateMany avoids the `RETURNING *` clause that `db.update` appends: the
+  // libSQL embedded replica cannot delegate row-returning writes to the Turso
+  // primary (they fail with a Hrana stream error), and the row is unused here.
+  await db.updateMany(games, { ...data, created_at: Date.now() }, { where: { id } })
 }
 
 export function getGame(db: Db, id: number): Promise<Game | null> {
