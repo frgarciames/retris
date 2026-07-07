@@ -30,6 +30,8 @@ export const games = table({
     lines_goal: c.integer().notNull(),
     // Server-verified results, recomputed from the replay on submit.
     duration_ms: c.integer().notNull(),
+    // Classic mode: level reached at top-out. Sprint modes store 0.
+    level: c.integer().notNull().default(0),
     lines_cleared: c.integer().notNull(),
     // Recorded inputs as JSON: Array<{ tick: number; action: string }>.
     actions: c.text().notNull(),

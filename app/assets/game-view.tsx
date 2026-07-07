@@ -1,7 +1,8 @@
 import type { Handle, RemixNode } from 'remix/ui'
 import { css } from 'remix/ui'
 
-import { ghostY, NEXT_QUEUE_SIZE, type GameState } from '../game/engine.ts'
+import { ghostY, levelFor, NEXT_QUEUE_SIZE, type GameState } from '../game/engine.ts'
+import { isSurvivalMode } from '../game/modes.ts'
 import { cellsFor, PIECE_COLORS, type PieceType } from '../game/pieces.ts'
 import { formatTime } from '../utils/format.ts'
 import { Board, emptyView, PiecePreview, type BoardCell } from './board.tsx'
@@ -47,6 +48,8 @@ export function GameView(
     let cells = buildCells(state)
     let activeColor = state.active ? PIECE_COLORS[state.active.type] : 'transparent'
     let goal = state.mode.goal.type === 'lines' ? state.mode.goal.count : 0
+    let survival = isSurvivalMode(state.mode)
+    let currentLevel = survival ? levelFor(state) : 0
     // The piece coming up next gets its own big tile; the three after it
     // render as the smaller queue.
     let queue = state.queue.slice(0, NEXT_QUEUE_SIZE + 1) as PieceType[]
@@ -62,6 +65,11 @@ export function GameView(
           {showTimer ? (
             <Panel label="Time">
               <div mix={statBig}>{formatTime(elapsedMs)}</div>
+            </Panel>
+          ) : null}
+          {survival ? (
+            <Panel label="Level">
+              <div mix={statBig}>{currentLevel}</div>
             </Panel>
           ) : null}
         </aside>
@@ -90,7 +98,7 @@ export function GameView(
           <Panel label="Lines">
             <div mix={statBig}>
               {state.linesCleared}
-              <span mix={statMuted}> / {goal}</span>
+              {goal > 0 ? <span mix={statMuted}> / {goal}</span> : null}
             </div>
           </Panel>
         </aside>
