@@ -8,6 +8,7 @@ import { router } from '../app/router.ts'
 import { routes } from '../app/routes.ts'
 import { ADMIN_USERNAME } from '../app/utils/admin.ts'
 import { generateWinningReplay } from './win-replay.ts'
+import { generateGameoverReplay } from './gameover-replay.ts'
 
 const BASE = 'http://localhost'
 const url = (path: string) => BASE + path
@@ -171,7 +172,70 @@ describe('auth + game submission', () => {
   it('serves the public leaderboard page', async () => {
     let res = await router.fetch(new Request(url(routes.leaderboard.href())))
     assert.equal(res.status, 200)
-    assert.match(await res.text(), /Leaderboard/)
+    let html = await res.text()
+    assert.match(html, /Leaderboard/)
+    assert.match(html, /Classic/)
+  })
+})
+
+describe('classic mode submission', () => {
+  async function signupUser(username: string): Promise<string> {
+    return sessionCookie(await signup(username))
+  }
+
+  it('accepts a verified classic gameover for guests with rank', async () => {
+    let replay = generateGameoverReplay(100)
+    let body = new FormData()
+    body.set('seed', String(replay.seed))
+    body.set('mode', replay.mode)
+    body.set('actions', JSON.stringify(replay.actions))
+    let res = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body }),
+    )
+    assert.equal(res.status, 200)
+    let data = (await res.json()) as {
+      pending: boolean
+      newBest: boolean
+      rank: number
+      level: number
+    }
+    assert.equal(data.pending, true)
+    assert.equal(data.newBest, true)
+    assert.equal(data.rank, 1)
+    assert.equal(data.level, replay.level)
+  })
+
+  it('stores only the best classic run per user', async () => {
+    let cookie = await signupUser('classic-ace')
+    let first = generateGameoverReplay(101)
+    let body = new FormData()
+    body.set('seed', String(first.seed))
+    body.set('mode', first.mode)
+    body.set('actions', JSON.stringify(first.actions))
+    let res1 = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body, headers: { cookie } }),
+    )
+    assert.equal(res1.status, 200)
+    let data1 = (await res1.json()) as { saved: boolean; newBest: boolean; rank: number }
+    assert.equal(data1.saved, true)
+    assert.equal(data1.newBest, true)
+    assert.equal(data1.rank, 1)
+
+    let worse = generateGameoverReplay(102)
+    let worseBody = new FormData()
+    worseBody.set('seed', String(worse.seed))
+    worseBody.set('mode', worse.mode)
+    worseBody.set('actions', JSON.stringify(worse.actions))
+    let res2 = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: worseBody,
+        headers: { cookie },
+      }),
+    )
+    let data2 = (await res2.json()) as { saved: boolean; newBest: boolean }
+    assert.equal(data2.saved, false)
+    assert.equal(data2.newBest, false)
   })
 })
 

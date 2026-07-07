@@ -22,6 +22,7 @@ export function HomePage(handle: Handle<HomePageProps>) {
   return () => {
     let { user, theme, seed, mode, modes } = handle.props
     let label = getMode(mode)?.label ?? mode
+    let isSprint = getMode(mode)?.goal.type === 'lines'
     return (
       <AppShell
         user={user}
@@ -31,7 +32,7 @@ export function HomePage(handle: Handle<HomePageProps>) {
         canonical={routes.home.href()}
         head={<JsonLd data={homeStructuredData()} />}
       >
-        <h1 mix={titleStyle}>{label} Sprint</h1>
+        <h1 mix={titleStyle}>{isSprint ? `${label} Sprint` : label}</h1>
         <nav mix={modeRowStyle} aria-label="Game mode">
           {modes.map((m) => (
             <a

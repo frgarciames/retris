@@ -4,8 +4,9 @@ import { css } from 'remix/ui'
 import type { LeaderboardEntry } from '../data/games.ts'
 import type { VersusDir, VersusSort, VersusStanding } from '../data/versus.ts'
 import type { GameMode } from '../game/modes.ts'
+import { rankingKind } from '../game/modes.ts'
 import { routes } from '../routes.ts'
-import { formatTime } from '../utils/format.ts'
+import { formatClassicScore, formatTime } from '../utils/format.ts'
 import { AppShell, type ShellUser } from './layout.tsx'
 import type { Theme } from './themes.ts'
 
@@ -126,7 +127,9 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
                   <tr>
                     <th mix={thStyle}>#</th>
                     <th mix={thStyle}>Player</th>
-                    <th mix={[thStyle, rightStyle]}>Time</th>
+                    <th mix={[thStyle, rightStyle]}>
+                      {rankingKind(mode) === 'levelTime' ? 'Level / Time' : 'Time'}
+                    </th>
                     <th mix={[thStyle, rightStyle]}>Replay</th>
                   </tr>
                 </thead>
@@ -135,7 +138,11 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
                     <tr key={entry.game.id} mix={rowStyle}>
                       <td mix={[tdStyle, rankStyle]}>{entry.rank}</td>
                       <td mix={tdStyle}>{entry.username}</td>
-                      <td mix={[tdStyle, rightStyle, timeStyle]}>{formatTime(entry.game.duration_ms)}</td>
+                      <td mix={[tdStyle, rightStyle, timeStyle]}>
+                        {rankingKind(mode) === 'levelTime'
+                          ? formatClassicScore(entry.game.level, entry.game.duration_ms)
+                          : formatTime(entry.game.duration_ms)}
+                      </td>
                       <td mix={[tdStyle, rightStyle]}>
                         <a href={routes.games.show.href({ id: String(entry.game.id) })} mix={watchStyle}>
                           Watch

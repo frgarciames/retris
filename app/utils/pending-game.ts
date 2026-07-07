@@ -1,7 +1,12 @@
 import type { Database } from 'remix/data-table'
 import type { Session } from 'remix/session'
 
-import { createGame } from '../data/games.ts'
+import {
+  beatsClassicScore,
+  createGame,
+  saveClassicBestIfBetter,
+} from '../data/games.ts'
+import { getMode, rankingKind } from '../game/modes.ts'
 
 type Db = InstanceType<typeof Database>
 
@@ -13,6 +18,7 @@ export interface PendingGame {
   seed: number
   lines_goal: number
   duration_ms: number
+  level: number
   lines_cleared: number
   // Recorded inputs as JSON, same encoding the games table uses.
   actions: string
@@ -29,6 +35,14 @@ export function readPendingGame(session: Session): PendingGame | null {
   return (session.get(KEY) as PendingGame | undefined) ?? null
 }
 
+export function shouldReplacePendingClassic(
+  pending: PendingGame | null,
+  candidate: { level: number; duration_ms: number },
+): boolean {
+  if (!pending || pending.mode !== 'classic') return true
+  return beatsClassicScore(candidate, pending)
+}
+
 // Persists the parked run under the now-authenticated user and clears it from
 // the session. Returns the new game id, or null when nothing was pending.
 export async function claimPendingGame(
@@ -38,7 +52,23 @@ export async function claimPendingGame(
 ): Promise<number | null> {
   let pending = readPendingGame(session)
   if (!pending) return null
-  let id = await createGame(db, { ...pending, user_id: userId })
+
+  let mode = getMode(pending.mode)
+  if (mode && rankingKind(mode) === 'levelTime') {
+    let { saved, gameId } = await saveClassicBestIfBetter(db, userId, {
+      mode: pending.mode,
+      seed: pending.seed,
+      lines_goal: pending.lines_goal,
+      duration_ms: pending.duration_ms,
+      level: pending.level,
+      lines_cleared: pending.lines_cleared,
+      actions: pending.actions,
+    })
+    session.unset(KEY)
+    return gameId
+  }
+
+  let id = await createGame(db, { ...pending, user_id: userId, level: pending.level ?? 0 })
   session.unset(KEY)
   return id
 }
