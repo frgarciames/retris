@@ -11,6 +11,8 @@ export interface DocumentProps {
 
 const DEFAULT_TITLE = readAppDisplayName('Retris')
 
+const PLAUSIBLE_INIT_SCRIPT = `window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)},window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};window.plausible.init();`
+
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
     let { children, head, title = DEFAULT_TITLE } = handle.props
@@ -24,11 +26,7 @@ export function Document(handle: Handle<DocumentProps>) {
             content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
           />
           <script async src="https://plausible.io/js/pa-kSnxLJOs-rVla-3VXK8xi.js"></script>
-          <script>
-            {/* @ts-ignore */}
-            window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)},window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};
-            window.plausible.init()
-          </script>
+          <script innerHTML={PLAUSIBLE_INIT_SCRIPT} />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <title>{title}</title>
           {head}
