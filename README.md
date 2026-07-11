@@ -46,20 +46,20 @@ That one property is what makes everything else simple:
 
 - **Time is derived, not measured** — `duration = finishingTick × (1000 / 60) ms`. It can't drift between machines.
 - **A replay is tiny** — just `seed + actions[]`, not a stream of board states.
-- **Cheat-resistance is free** — to fake a fast time you'd have to submit inputs that *actually* clear the lines that fast. The server replays them and rejects anything that doesn't reach the goal.
+- **Cheat-resistance is free** — to fake a fast time you'd have to submit inputs that _actually_ clear the lines that fast. The server replays them and rejects anything that doesn't reach the goal.
 
 ---
 
 ## 🛠️ Tech stack
 
-| Layer        | Choice                                                                 |
-| ------------ | ---------------------------------------------------------------------- |
-| Framework    | **Remix 3** (beta) — server-first, Web-API based, its own UI runtime (not React) |
-| Runtime      | **Node ≥ 24.3** with the experimental built-in `node:sqlite`           |
-| Database     | SQLite via `remix/data-table` + hand-written SQL migrations — a local `node:sqlite` file in dev, **[Turso](https://turso.tech)** (libSQL embedded replica via `libsql`) in production |
-| Auth         | Session cookies + `node:crypto` scrypt password hashing                |
-| Styling      | `css()` mixins (CSS-in-JS, server-rendered, adopted as a stylesheet)   |
-| Package mgr  | **pnpm**                                                               |
+| Layer       | Choice                                                                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework   | **Remix 3** (beta) — server-first, Web-API based, its own UI runtime (not React)                                                                                                      |
+| Runtime     | **Node ≥ 24.3** with the experimental built-in `node:sqlite`                                                                                                                          |
+| Database    | SQLite via `remix/data-table` + hand-written SQL migrations — a local `node:sqlite` file in dev, **[Turso](https://turso.tech)** (libSQL embedded replica via `libsql`) in production |
+| Auth        | Session cookies + `node:crypto` scrypt password hashing                                                                                                                               |
+| Styling     | `css()` mixins (CSS-in-JS, server-rendered, adopted as a stylesheet)                                                                                                                  |
+| Package mgr | **pnpm**                                                                                                                                                                              |
 
 The only runtime dependencies are `remix` itself and `libsql` (the Turso/libSQL client, used only when a Turso URL is configured) — in plain local dev the database driver and password hashing both come from the Node standard library.
 
@@ -85,39 +85,39 @@ Migrations run automatically on startup, creating `db/retris.sqlite` on first bo
 
 ### Environment variables
 
-| Variable         | Default              | Notes                                                                 |
-| ---------------- | -------------------- | --------------------------------------------------------------------- |
-| `SESSION_SECRET` | insecure dev secret  | Used to sign session cookies. **Required in production** (the app refuses to boot without it). |
-| `ADMIN_USERNAME` | `admin@example.test` (dev/test) | Username of the single admin account. **Required in production** (the app refuses to boot without it); dev/test fall back to `admin@example.test`. |
-| `PORT`           | `44100`              | HTTP port.                                                            |
-| `NODE_ENV`       | `development`        | `production` enables secure cookies + minification; `test` uses in-memory DB & sessions. |
-| `TURSO_DATABASE_URL` | _(unset)_        | When set, the app reads/writes through a **Turso** libSQL embedded replica synced from this primary instead of the local SQLite file. Leave unset for a plain local `db/retris.sqlite`. |
-| `TURSO_AUTH_TOKEN` | _(unset)_          | Auth token for the Turso primary referenced by `TURSO_DATABASE_URL`.  |
+| Variable             | Default                         | Notes                                                                                                                                                                                   |
+| -------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`     | insecure dev secret             | Used to sign session cookies. **Required in production** (the app refuses to boot without it).                                                                                          |
+| `ADMIN_USERNAME`     | `admin@example.test` (dev/test) | Username of the single admin account. **Required in production** (the app refuses to boot without it); dev/test fall back to `admin@example.test`.                                      |
+| `PORT`               | `44100`                         | HTTP port.                                                                                                                                                                              |
+| `NODE_ENV`           | `development`                   | `production` enables secure cookies + minification; `test` uses in-memory DB & sessions.                                                                                                |
+| `TURSO_DATABASE_URL` | _(unset)_                       | When set, the app reads/writes through a **Turso** libSQL embedded replica synced from this primary instead of the local SQLite file. Leave unset for a plain local `db/retris.sqlite`. |
+| `TURSO_AUTH_TOKEN`   | _(unset)_                       | Auth token for the Turso primary referenced by `TURSO_DATABASE_URL`.                                                                                                                    |
 
 ---
 
 ## 📜 Scripts
 
-| Command           | What it does                                                              |
-| ----------------- | ------------------------------------------------------------------------ |
-| `pnpm dev`        | Run the server with `--watch` (restarts on file changes).                |
-| `pnpm start`      | Run the server once (production-style).                                  |
-| `pnpm migrate`    | Apply pending database migrations explicitly.                            |
-| `pnpm test`       | Run the test suite (`node:test`) — engine, password hashing, HTTP flows. |
-| `pnpm typecheck`  | Type-check the whole project with `tsc --noEmit`.                        |
+| Command          | What it does                                                             |
+| ---------------- | ------------------------------------------------------------------------ |
+| `pnpm dev`       | Run the server with `--watch` (restarts on file changes).                |
+| `pnpm start`     | Run the server once (production-style).                                  |
+| `pnpm migrate`   | Apply pending database migrations explicitly.                            |
+| `pnpm test`      | Run the test suite (`node:test`) — engine, password hashing, HTTP flows. |
+| `pnpm typecheck` | Type-check the whole project with `tsc --noEmit`.                        |
 
 ---
 
 ## 🎯 Controls
 
-| Action          | Keys                |
-| --------------- | ------------------- |
-| Move left/right | `←` `→`             |
-| Soft drop       | `↓`                 |
-| Hard drop       | `Space`             |
-| Rotate CW       | `↑` / `X`           |
-| Rotate CCW      | `Z` / `Ctrl`        |
-| Hold            | `C` / `Shift`       |
+| Action          | Keys          |
+| --------------- | ------------- |
+| Move left/right | `←` `→`       |
+| Soft drop       | `↓`           |
+| Hard drop       | `Space`       |
+| Rotate CW       | `↑` / `X`     |
+| Rotate CCW      | `Z` / `Ctrl`  |
+| Hold            | `C` / `Shift` |
 
 ---
 
@@ -125,12 +125,12 @@ Migrations run automatically on startup, creating `db/retris.sqlite` on first bo
 
 Pick a theme from the swatches in the header — the choice is saved to a cookie and applied on every page (including the game board), with no page-specific work.
 
-| Theme        | Vibe                                  |
-| ------------ | ------------------------------------- |
-| **Midnight** | Calm slate-blue dark mode (default)   |
-| **Aesthetic**| Soft pastel lavender, light           |
+| Theme          | Vibe                                |
+| -------------- | ----------------------------------- |
+| **Midnight**   | Calm slate-blue dark mode (default) |
+| **Aesthetic**  | Soft pastel lavender, light         |
 | **Futuristic** | Deep-space black with neon teal     |
-| **Retro**    | Green-phosphor / Game Boy CRT         |
+| **Retro**      | Green-phosphor / Game Boy CRT       |
 
 A theme is just a set of CSS custom properties (`--bg`, `--panel`, `--accent`, …) in [`app/ui/themes.ts`](app/ui/themes.ts); the shell sets them on its root so they cascade everywhere. Adding one is a single entry there — the switcher and every page pick it up automatically.
 
@@ -175,7 +175,7 @@ server.ts               # Node HTTP adapter
 ## 🗄️ Database & migrations
 
 - In local dev the database lives at `db/retris.sqlite` (git-ignored) and is opened with Node's built-in `node:sqlite`.
-- In production, set `TURSO_DATABASE_URL` (+ `TURSO_AUTH_TOKEN`) to back the app with **[Turso](https://turso.tech)**. The app opens a libSQL *embedded replica* (`db/replica.sqlite`) via the `libsql` driver: reads hit the local replica instead of a ~200 ms network round-trip per query, writes are delegated to the Turso primary, and the replica re-syncs every 10 s. Everything still flows through the same synchronous sqlite adapter, so the rest of the code is unchanged.
+- In production, set `TURSO_DATABASE_URL` (+ `TURSO_AUTH_TOKEN`) to back the app with **[Turso](https://turso.tech)**. The app opens a libSQL _embedded replica_ (`db/replica.sqlite`) via the `libsql` driver: reads hit the local replica instead of a ~200 ms network round-trip per query, writes are delegated to the Turso primary, and the replica re-syncs every 10 s. Everything still flows through the same synchronous sqlite adapter, so the rest of the code is unchanged.
 - Migrations are plain SQL files under `db/migrations/<timestamp>_<name>/{up,down}.sql`. They are **applied automatically on startup** and tracked by checksum, so they run exactly once.
 - Two tables: **`users`** (id, username, password hash) and **`games`** (the stored replays — seed, mode, recorded actions JSON, plus the server-verified duration and line count).
 
@@ -189,10 +189,10 @@ Modes are data, not code paths. To add one, register it in [`app/game/modes.ts`]
 
 ```ts
 export const MODES: Record<string, GameMode> = {
-  sprint40: { id: 'sprint40', label: '40 Lines', goal: { type: 'lines', count: 40 } },
-  sprint20: { id: 'sprint20', label: '20 Lines', goal: { type: 'lines', count: 20 } },
+  sprint40: { id: "sprint40", label: "40 Lines", goal: { type: "lines", count: 40 } },
+  sprint20: { id: "sprint20", label: "20 Lines", goal: { type: "lines", count: 20 } },
   // sprint100: { id: 'sprint100', label: '100 Lines', goal: { type: 'lines', count: 100 } },
-}
+};
 ```
 
 The engine checks the goal generically, the play page exposes it via `/play?mode=<id>`, and the home page automatically renders a play button and a leaderboard for every registered mode. The `Goal` union is ready for new goal kinds (e.g. a timed mode) when you want them.

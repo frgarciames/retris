@@ -1,27 +1,27 @@
-import type { Handle } from 'remix/ui'
-import { css } from 'remix/ui'
+import type { Handle } from "remix/ui";
+import { css } from "remix/ui";
 
-import type { LeaderboardEntry } from '../data/games.ts'
-import type { VersusDir, VersusSort, VersusStanding } from '../data/versus.ts'
-import type { GameMode } from '../game/modes.ts'
-import { rankingKind } from '../game/modes.ts'
-import { routes } from '../routes.ts'
-import { formatClassicScore, formatTime } from '../utils/format.ts'
-import { AppShell, type ShellUser } from './layout.tsx'
-import type { Theme } from './themes.ts'
+import type { LeaderboardEntry } from "../data/games.ts";
+import type { VersusDir, VersusSort, VersusStanding } from "../data/versus.ts";
+import type { GameMode } from "../game/modes.ts";
+import { rankingKind } from "../game/modes.ts";
+import { routes } from "../routes.ts";
+import { formatClassicScore, formatTime } from "../utils/format.ts";
+import { AppShell, type ShellUser } from "./layout.tsx";
+import type { Theme } from "./themes.ts";
 
 export interface ModeBoard {
-  mode: GameMode
-  entries: LeaderboardEntry[]
+  mode: GameMode;
+  entries: LeaderboardEntry[];
 }
 
 export interface LeaderboardPageProps {
-  user?: ShellUser | null
-  theme?: Theme
-  boards: ModeBoard[]
-  versus: VersusStanding[]
-  versusSort: VersusSort
-  versusDir: VersusDir
+  user?: ShellUser | null;
+  theme?: Theme;
+  boards: ModeBoard[];
+  versus: VersusStanding[];
+  versusSort: VersusSort;
+  versusDir: VersusDir;
 }
 
 // A clickable column header that ranks the 1v1 table by its column. The active
@@ -31,25 +31,25 @@ function SortHeader(
   handle: Handle<{ label: string; sort: VersusSort; active: VersusSort; activeDir: VersusDir }>,
 ) {
   return () => {
-    let { label, sort, active, activeDir } = handle.props
-    let isActive = sort === active
-    let nextDir: VersusDir = isActive && activeDir === 'desc' ? 'asc' : 'desc'
+    let { label, sort, active, activeDir } = handle.props;
+    let isActive = sort === active;
+    let nextDir: VersusDir = isActive && activeDir === "desc" ? "asc" : "desc";
     return (
       <a
         href={`${routes.leaderboard.href()}?vsort=${sort}&vdir=${nextDir}`}
         mix={isActive ? [sortLinkStyle, sortActiveStyle] : sortLinkStyle}
-        aria-sort={isActive ? (activeDir === 'desc' ? 'descending' : 'ascending') : 'none'}
+        aria-sort={isActive ? (activeDir === "desc" ? "descending" : "ascending") : "none"}
       >
         {label}
-        <span mix={caretStyle}>{isActive ? (activeDir === 'desc' ? '▼' : '▲') : ''}</span>
+        <span mix={caretStyle}>{isActive ? (activeDir === "desc" ? "▼" : "▲") : ""}</span>
       </a>
-    )
-  }
+    );
+  };
 }
 
 export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
   return () => {
-    let { user, theme, boards, versus, versusSort, versusDir } = handle.props
+    let { user, theme, boards, versus, versusSort, versusDir } = handle.props;
     return (
       <AppShell
         user={user}
@@ -76,7 +76,12 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
                   <th mix={thStyle}>#</th>
                   <th mix={thStyle}>Player</th>
                   <th mix={[thStyle, rightStyle]}>
-                    <SortHeader label="Wins" sort="wins" active={versusSort} activeDir={versusDir} />
+                    <SortHeader
+                      label="Wins"
+                      sort="wins"
+                      active={versusSort}
+                      activeDir={versusDir}
+                    />
                   </th>
                   <th mix={[thStyle, rightStyle]}>
                     <SortHeader
@@ -128,7 +133,7 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
                     <th mix={thStyle}>#</th>
                     <th mix={thStyle}>Player</th>
                     <th mix={[thStyle, rightStyle]}>
-                      {rankingKind(mode) === 'levelTime' ? 'Level / Time' : 'Time'}
+                      {rankingKind(mode) === "levelTime" ? "Level / Time" : "Time"}
                     </th>
                     <th mix={[thStyle, rightStyle]}>Replay</th>
                   </tr>
@@ -139,12 +144,15 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
                       <td mix={[tdStyle, rankStyle]}>{entry.rank}</td>
                       <td mix={tdStyle}>{entry.username}</td>
                       <td mix={[tdStyle, rightStyle, timeStyle]}>
-                        {rankingKind(mode) === 'levelTime'
+                        {rankingKind(mode) === "levelTime"
                           ? formatClassicScore(entry.game.level, entry.game.duration_ms)
                           : formatTime(entry.game.duration_ms)}
                       </td>
                       <td mix={[tdStyle, rightStyle]}>
-                        <a href={routes.games.show.href({ id: String(entry.game.id) })} mix={watchStyle}>
+                        <a
+                          href={routes.games.show.href({ id: String(entry.game.id) })}
+                          mix={watchStyle}
+                        >
                           Watch
                         </a>
                       </td>
@@ -156,67 +164,69 @@ export function LeaderboardPage(handle: Handle<LeaderboardPageProps>) {
           </section>
         ))}
       </AppShell>
-    )
-  }
+    );
+  };
 }
 
 const titleStyle = css({
-  margin: '0 0 8px',
-  fontSize: '24px',
-  fontFamily: 'var(--font-display, var(--font))',
-  letterSpacing: 'var(--tracking, 0.04em)',
-})
+  margin: "0 0 8px",
+  fontSize: "24px",
+  fontFamily: "var(--font-display, var(--font))",
+  letterSpacing: "var(--tracking, 0.04em)",
+});
 
-const boardSectionStyle = css({ marginTop: '32px' })
+const boardSectionStyle = css({ marginTop: "32px" });
 const boardHeading = css({
-  margin: '0 0 16px',
-  fontSize: '13px',
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  color: 'var(--muted, #8b949e)',
-  display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  gap: '12px',
-})
+  margin: "0 0 16px",
+  fontSize: "13px",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  color: "var(--muted, #8b949e)",
+  display: "flex",
+  alignItems: "baseline",
+  justifyContent: "space-between",
+  gap: "12px",
+});
 const playModeStyle = css({
-  color: 'var(--accent, #2dacf9)',
-  textDecoration: 'none',
-  letterSpacing: '0.08em',
-})
-const emptyStyle = css({ color: 'var(--muted, #8b949e)' })
+  color: "var(--accent, #2dacf9)",
+  textDecoration: "none",
+  letterSpacing: "0.08em",
+});
+const emptyStyle = css({ color: "var(--muted, #8b949e)" });
 
 const tableStyle = css({
-  width: '100%',
-  borderCollapse: 'collapse',
-  background: 'var(--panel, #161b22)',
-  border: 'var(--border-w, 1px) solid var(--border, #2b333d)',
-  borderRadius: 'var(--radius-lg, 12px)',
-  boxShadow: 'var(--shadow-panel, none)',
-  overflow: 'hidden',
-})
+  width: "100%",
+  borderCollapse: "collapse",
+  background: "var(--panel, #161b22)",
+  border: "var(--border-w, 1px) solid var(--border, #2b333d)",
+  borderRadius: "var(--radius-lg, 12px)",
+  boxShadow: "var(--shadow-panel, none)",
+  overflow: "hidden",
+});
 const thStyle = css({
-  textAlign: 'left',
-  padding: '12px 16px',
-  fontSize: '11px',
-  letterSpacing: '0.1em',
-  textTransform: 'uppercase',
-  color: 'var(--muted, #8b949e)',
-  borderBottom: '1px solid var(--border, #2b333d)',
-})
-const rightStyle = css({ textAlign: 'right' })
+  textAlign: "left",
+  padding: "12px 16px",
+  fontSize: "11px",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "var(--muted, #8b949e)",
+  borderBottom: "1px solid var(--border, #2b333d)",
+});
+const rightStyle = css({ textAlign: "right" });
 const sortLinkStyle = css({
-  color: 'inherit',
-  textDecoration: 'none',
-  cursor: 'pointer',
-  letterSpacing: 'inherit',
-  textTransform: 'inherit',
-  '&:hover': { color: 'var(--text, #e6edf3)' },
-})
-const sortActiveStyle = css({ color: 'var(--accent, #2dacf9)' })
-const caretStyle = css({ fontSize: '8px', marginLeft: '4px', verticalAlign: 'middle' })
-const rowStyle = css({ '&:not(:last-child) td': { borderBottom: '1px solid var(--border, #2b333d)' } })
-const tdStyle = css({ padding: '12px 16px' })
-const rankStyle = css({ color: 'var(--muted, #8b949e)', width: '48px' })
-const timeStyle = css({ fontVariantNumeric: 'tabular-nums', fontWeight: 700 })
-const watchStyle = css({ color: 'var(--accent, #2dacf9)', textDecoration: 'none' })
+  color: "inherit",
+  textDecoration: "none",
+  cursor: "pointer",
+  letterSpacing: "inherit",
+  textTransform: "inherit",
+  "&:hover": { color: "var(--text, #e6edf3)" },
+});
+const sortActiveStyle = css({ color: "var(--accent, #2dacf9)" });
+const caretStyle = css({ fontSize: "8px", marginLeft: "4px", verticalAlign: "middle" });
+const rowStyle = css({
+  "&:not(:last-child) td": { borderBottom: "1px solid var(--border, #2b333d)" },
+});
+const tdStyle = css({ padding: "12px 16px" });
+const rankStyle = css({ color: "var(--muted, #8b949e)", width: "48px" });
+const timeStyle = css({ fontVariantNumeric: "tabular-nums", fontWeight: 700 });
+const watchStyle = css({ color: "var(--accent, #2dacf9)", textDecoration: "none" });

@@ -1,22 +1,22 @@
-import type { Handle } from 'remix/ui'
-import { css } from 'remix/ui'
+import type { Handle } from "remix/ui";
+import { css } from "remix/ui";
 
-import { VersusReplay } from '../../assets/versus-replay-player.tsx'
-import type { VersusGame } from '../../data/schema.ts'
-import { VERSUS_MODE } from '../../game/modes.ts'
-import { routes } from '../../routes.ts'
-import { AppShell } from '../../ui/layout.tsx'
-import type { Theme } from '../../ui/themes.ts'
+import { VersusReplay } from "../../assets/versus-replay-player.tsx";
+import type { VersusGame } from "../../data/schema.ts";
+import { VERSUS_MODE } from "../../game/modes.ts";
+import { routes } from "../../routes.ts";
+import { AppShell } from "../../ui/layout.tsx";
+import type { Theme } from "../../ui/themes.ts";
 
 export interface VersusReplayPageProps {
-  game: VersusGame
-  viewer?: { username: string } | null
-  theme?: Theme
+  game: VersusGame;
+  viewer?: { username: string } | null;
+  theme?: Theme;
 }
 
 export function VersusReplayPage(handle: Handle<VersusReplayPageProps>) {
   return () => {
-    let { game, viewer, theme } = handle.props
+    let { game, viewer, theme } = handle.props;
     return (
       <AppShell
         user={viewer}
@@ -44,15 +44,15 @@ export function VersusReplayPage(handle: Handle<VersusReplayPageProps>) {
           loserGarbage={game.loser_garbage}
         />
       </AppShell>
-    )
-  }
+    );
+  };
 }
 
-const headStyle = css({ marginBottom: '20px' })
+const headStyle = css({ marginBottom: "20px" });
 const titleStyle = css({
   margin: 0,
-  fontSize: '24px',
-  fontFamily: 'var(--font-display, var(--font))',
-})
-const beatStyle = css({ color: 'var(--muted, #8b949e)', fontWeight: 400 })
-const subStyle = css({ margin: '6px 0 0', color: 'var(--muted, #8b949e)' })
+  fontSize: "24px",
+  fontFamily: "var(--font-display, var(--font))",
+});
+const beatStyle = css({ color: "var(--muted, #8b949e)", fontWeight: 400 });
+const subStyle = css({ margin: "6px 0 0", color: "var(--muted, #8b949e)" });

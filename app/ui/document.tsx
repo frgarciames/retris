@@ -1,21 +1,21 @@
-import type { Handle, RemixNode } from 'remix/ui'
+import type { Handle, RemixNode } from "remix/ui";
 
-import { css } from 'remix/ui'
-import { routes } from '../routes.ts'
+import { css } from "remix/ui";
+import { routes } from "../routes.ts";
 
 export interface DocumentProps {
-  children?: RemixNode
-  head?: RemixNode
-  title?: string
+  children?: RemixNode;
+  head?: RemixNode;
+  title?: string;
 }
 
-const DEFAULT_TITLE = readAppDisplayName('Retris')
+const DEFAULT_TITLE = readAppDisplayName("Retris");
 
-const PLAUSIBLE_INIT_SCRIPT = `window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)},window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};window.plausible.init();`
+const PLAUSIBLE_INIT_SCRIPT = `window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)},window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};window.plausible.init();`;
 
 export function Document(handle: Handle<DocumentProps>) {
   return () => {
-    let { children, head, title = DEFAULT_TITLE } = handle.props
+    let { children, head, title = DEFAULT_TITLE } = handle.props;
 
     return (
       <html lang="en">
@@ -36,19 +36,19 @@ export function Document(handle: Handle<DocumentProps>) {
             margin: 0,
             // Mobile: stop the gray tap flash and keep font sizing stable so
             // rapid button taps don't trigger zoom or text-size adjustments.
-            WebkitTapHighlightColor: 'transparent',
-            WebkitTextSizeAdjust: '100%',
-            touchAction: 'manipulation',
+            WebkitTapHighlightColor: "transparent",
+            WebkitTextSizeAdjust: "100%",
+            touchAction: "manipulation",
           })}
         >
           {children}
-          <script type="module" src={routes.assets.href({ path: 'app/assets/entry.ts' })}></script>
+          <script type="module" src={routes.assets.href({ path: "app/assets/entry.ts" })}></script>
         </body>
       </html>
-    )
-  }
+    );
+  };
 }
 
 function readAppDisplayName(value: string): string {
-  return value.startsWith('%%') ? 'Remix App' : decodeURIComponent(value)
+  return value.startsWith("%%") ? "Remix App" : decodeURIComponent(value);
 }

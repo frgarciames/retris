@@ -1,12 +1,12 @@
-import { column as c, table } from 'remix/data-table'
-import type { TableRow } from 'remix/data-table'
+import { column as c, table } from "remix/data-table";
+import type { TableRow } from "remix/data-table";
 
 // Schema definitions describe what the app reads and writes. The SQL migrations
 // under db/migrations/ own the actual DDL and constraints; the modifiers here
 // mirror those constraints so the table defs stay useful as schema-level docs.
 
 export const users = table({
-  name: 'users',
+  name: "users",
   columns: {
     id: c.integer().primaryKey().autoIncrement(),
     username: c.text().notNull().unique(),
@@ -14,24 +14,24 @@ export const users = table({
     password_hash: c.text().notNull(),
     created_at: c.integer().notNull(),
   },
-})
+});
 
 export const passwordResetTokens = table({
-  name: 'password_reset_tokens',
+  name: "password_reset_tokens",
   columns: {
     id: c.integer().primaryKey().autoIncrement(),
-    user_id: c.integer().notNull().references('users', 'id'),
+    user_id: c.integer().notNull().references("users", "id"),
     token_hash: c.text().notNull().unique(),
     expires_at: c.integer().notNull(),
     created_at: c.integer().notNull(),
   },
-})
+});
 
 export const games = table({
-  name: 'games',
+  name: "games",
   columns: {
     id: c.integer().primaryKey().autoIncrement(),
-    user_id: c.integer().notNull().references('users', 'id'),
+    user_id: c.integer().notNull().references("users", "id"),
     // Game mode identifier (e.g. "sprint40"). Stored per run so new modes can be
     // added later without migrating existing rows.
     mode: c.text().notNull(),
@@ -49,17 +49,17 @@ export const games = table({
     actions: c.text().notNull(),
     created_at: c.integer().notNull(),
   },
-})
+});
 
 // Completed 1v1 matches. Both players' recordings are stored against the shared
 // seed so the match can be replayed board-for-board. User ids are nullable: a
 // guest can play, but only registered players appear on the 1v1 leaderboard.
 export const versusGames = table({
-  name: 'versus_games',
+  name: "versus_games",
   columns: {
     id: c.integer().primaryKey().autoIncrement(),
-    winner_user_id: c.integer().references('users', 'id').nullable(),
-    loser_user_id: c.integer().references('users', 'id').nullable(),
+    winner_user_id: c.integer().references("users", "id").nullable(),
+    loser_user_id: c.integer().references("users", "id").nullable(),
     winner_name: c.text().notNull(),
     loser_name: c.text().notNull(),
     // Shared PRNG seed (both boards draw the same piece sequence).
@@ -74,9 +74,9 @@ export const versusGames = table({
     loser_lines: c.integer().notNull(),
     created_at: c.integer().notNull(),
   },
-})
+});
 
-export type User = TableRow<typeof users>
-export type PasswordResetToken = TableRow<typeof passwordResetTokens>
-export type Game = TableRow<typeof games>
-export type VersusGame = TableRow<typeof versusGames>
+export type User = TableRow<typeof users>;
+export type PasswordResetToken = TableRow<typeof passwordResetTokens>;
+export type Game = TableRow<typeof games>;
+export type VersusGame = TableRow<typeof versusGames>;

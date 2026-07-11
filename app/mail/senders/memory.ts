@@ -1,15 +1,15 @@
-import type { MailMessage, MailSender } from '../types.ts'
+import type { MailMessage, MailSender } from "../types.ts";
 
-export let sentMails: MailMessage[] = []
+export let sentMails: MailMessage[] = [];
 
 export function clearSentMails(): void {
-  sentMails = []
+  sentMails = [];
 }
 
 export function createMemorySender(): MailSender {
   return {
     async send(message) {
-      sentMails.push(message)
+      sentMails.push(message);
     },
-  }
+  };
 }

@@ -1,25 +1,25 @@
-import { Database, sql } from 'remix/data-table'
+import { Database, sql } from "remix/data-table";
 
-type Db = InstanceType<typeof Database>
+type Db = InstanceType<typeof Database>;
 
 // One row in a profile's game history. Solo runs and 1v1 matches are merged into
 // a single list; `kind` selects which replay route the UI links to and `modeId`
 // is resolved to a human label via the mode registry.
 export interface ProfileGame {
-  kind: 'solo' | 'versus'
-  id: number
+  kind: "solo" | "versus";
+  id: number;
   // A solo mode id ("sprint20") or "versus" for 1v1.
-  modeId: string
-  created_at: number
+  modeId: string;
+  created_at: number;
   // 1v1 only: whether the profile owner won the match.
-  won?: boolean
+  won?: boolean;
 }
 
 export interface ProfileGamesPage {
-  items: ProfileGame[]
-  page: number
-  pages: number
-  total: number
+  items: ProfileGame[];
+  page: number;
+  pages: number;
+  total: number;
 }
 
 // Total games a user owns across both tables. Used to bound pagination before
@@ -34,8 +34,8 @@ async function countUserGames(db: Db, userId: number): Promise<number> {
       + (SELECT COUNT(*) FROM versus_games
          WHERE winner_user_id = ${userId} OR loser_user_id = ${userId})
       AS total
-  `)
-  return Number(rows?.[0]?.total ?? 0)
+  `);
+  return Number(rows?.[0]?.total ?? 0);
 }
 
 // Every game a user owns — solo runs plus 1v1 matches they played on either
@@ -48,10 +48,10 @@ export async function getUserGamesPage(
   page: number,
   pageSize: number,
 ): Promise<ProfileGamesPage> {
-  let total = await countUserGames(db, userId)
-  let pages = Math.max(1, Math.ceil(total / pageSize))
-  let current = Math.min(Math.max(1, page), pages)
-  let offset = (current - 1) * pageSize
+  let total = await countUserGames(db, userId);
+  let pages = Math.max(1, Math.ceil(total / pageSize));
+  let current = Math.min(Math.max(1, page), pages);
+  let offset = (current - 1) * pageSize;
 
   // `sql` tag required — see countUserGames: it parameterizes the ${} values
   // (bound `?`), so dropping it would reintroduce SQL injection.
@@ -66,15 +66,15 @@ export async function getUserGamesPage(
     WHERE winner_user_id = ${userId} OR loser_user_id = ${userId}
     ORDER BY created_at DESC, kind ASC, id DESC
     LIMIT ${pageSize} OFFSET ${offset}
-  `)
+  `);
 
   let items: ProfileGame[] = (rows ?? []).map((r) => ({
-    kind: r.kind as 'solo' | 'versus',
+    kind: r.kind as "solo" | "versus",
     id: Number(r.id),
     modeId: String(r.mode_id),
     created_at: Number(r.created_at),
-    won: r.kind === 'versus' ? Boolean(r.won) : undefined,
-  }))
+    won: r.kind === "versus" ? Boolean(r.won) : undefined,
+  }));
 
-  return { items, page: current, pages, total }
+  return { items, page: current, pages, total };
 }

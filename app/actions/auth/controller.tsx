@@ -1,18 +1,18 @@
-import { redirect } from 'remix/response/redirect'
-import { createController } from 'remix/router'
-import { Session } from 'remix/session'
+import { redirect } from "remix/response/redirect";
+import { createController } from "remix/router";
+import { Session } from "remix/session";
 
-import { routes } from '../../routes.ts'
+import { routes } from "../../routes.ts";
 
 // Owns the leaf routes directly under /auth. The login and signup form route
 // maps have their own controllers (mapped explicitly in app/router.ts).
 export default createController(routes.auth, {
   actions: {
     logout(context) {
-      let session = context.get(Session)
-      session.unset('auth')
-      session.regenerateId(true)
-      return redirect(routes.home.href(), 303)
+      let session = context.get(Session);
+      session.unset("auth");
+      session.regenerateId(true);
+      return redirect(routes.home.href(), 303);
     },
   },
-})
+});

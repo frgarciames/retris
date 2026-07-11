@@ -1,40 +1,40 @@
-import type { Handle, RemixNode } from 'remix/ui'
-import { css } from 'remix/ui'
+import type { Handle, RemixNode } from "remix/ui";
+import { css } from "remix/ui";
 
-import { MobileHeaderMenu } from '../assets/mobile-header-menu.tsx'
-import { ThemeSwitcher } from '../assets/theme-switcher.tsx'
-import { routes } from '../routes.ts'
-import { isAdmin } from '../utils/admin.ts'
-import { Document } from './document.tsx'
-import { Seo } from './seo.tsx'
-import { DEFAULT_THEME, getTheme, themeVars, type Theme } from './themes.ts'
+import { MobileHeaderMenu } from "../assets/mobile-header-menu.tsx";
+import { ThemeSwitcher } from "../assets/theme-switcher.tsx";
+import { routes } from "../routes.ts";
+import { isAdmin } from "../utils/admin.ts";
+import { Document } from "./document.tsx";
+import { Seo } from "./seo.tsx";
+import { DEFAULT_THEME, getTheme, themeVars, type Theme } from "./themes.ts";
 
 export const FONT_STACK =
-  "'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
+  "'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
 
 export interface ShellUser {
-  username: string
-  email?: string | null
+  username: string;
+  email?: string | null;
 }
 
 export interface AppShellProps {
-  user?: ShellUser | null
-  theme?: Theme
-  title?: string
+  user?: ShellUser | null;
+  theme?: Theme;
+  title?: string;
   /** Meta description for this page; defaults to the site description. */
-  description?: string
+  description?: string;
   /** Canonical path/URL for this page (also used for og:url). */
-  canonical?: string
+  canonical?: string;
   /** Keep this page out of search results (private/auth pages). */
-  noindex?: boolean
-  head?: RemixNode
-  children?: RemixNode
+  noindex?: boolean;
+  head?: RemixNode;
+  children?: RemixNode;
 }
 
 export function AppShell(handle: Handle<AppShellProps>) {
   return () => {
-    let { user, title, description, canonical, noindex, head, children } = handle.props
-    let theme = handle.props.theme ?? getTheme(DEFAULT_THEME)
+    let { user, title, description, canonical, noindex, head, children } = handle.props;
+    let theme = handle.props.theme ?? getTheme(DEFAULT_THEME);
     return (
       <Document
         title={title}
@@ -83,16 +83,18 @@ export function AppShell(handle: Handle<AppShellProps>) {
               logoutHref={routes.auth.logout.href()}
             />
           </header>
-          <main mix={mainStyle} id="game">{children}</main>
+          <main mix={mainStyle} id="game">
+            {children}
+          </main>
         </div>
       </Document>
-    )
-  }
+    );
+  };
 }
 
 function HeaderLinks(handle: Handle<{ user?: ShellUser | null }>) {
   return () => {
-    let user = handle.props.user
+    let user = handle.props.user;
     return (
       <>
         <a href={routes.home.href()}>Play</a>
@@ -119,8 +121,8 @@ function HeaderLinks(handle: Handle<{ user?: ShellUser | null }>) {
           </>
         )}
       </>
-    )
-  }
+    );
+  };
 }
 
 function FontHead(handle: Handle<{ href: string }>) {
@@ -131,145 +133,145 @@ function FontHead(handle: Handle<{ href: string }>) {
       {/* data-theme-font lets the client-side theme switcher retarget it. */}
       <link rel="stylesheet" href={handle.props.href} data-theme-font />
     </>
-  )
+  );
 }
 
 const rootStyle = css({
-  '& *, & *::before, & *::after': { boxSizing: 'border-box' },
-  position: 'relative',
-  minHeight: '100dvh',
-  background: 'var(--bg)',
-  backgroundImage: 'var(--bg-image, none)',
-  backgroundAttachment: 'fixed',
-  color: 'var(--text)',
-  fontFamily: 'var(--font)',
-  fontSize: 'var(--fs-base, 14px)',
+  "& *, & *::before, & *::after": { boxSizing: "border-box" },
+  position: "relative",
+  minHeight: "100dvh",
+  background: "var(--bg)",
+  backgroundImage: "var(--bg-image, none)",
+  backgroundAttachment: "fixed",
+  color: "var(--text)",
+  fontFamily: "var(--font)",
+  fontSize: "var(--fs-base, 14px)",
   lineHeight: 1.5,
-  display: 'flex',
-  flexDirection: 'column',
-  '@media (max-width: 640px)': {
-    backgroundAttachment: 'scroll',
+  display: "flex",
+  flexDirection: "column",
+  "@media (max-width: 640px)": {
+    backgroundAttachment: "scroll",
   },
-})
+});
 
 // CRT scanlines (retro): thin repeating dark lines over the whole app.
 const scanlinesStyle = css({
-  display: 'var(--fx-scanlines, none)',
-  position: 'fixed',
+  display: "var(--fx-scanlines, none)",
+  position: "fixed",
   inset: 0,
   zIndex: 40,
-  pointerEvents: 'none',
+  pointerEvents: "none",
   background:
-    'repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px, transparent 1px, transparent 3px)',
-})
+    "repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px, transparent 1px, transparent 3px)",
+});
 
 // Holo grid (futuristic): faint accent-tinted graph lines.
 const gridStyle = css({
-  display: 'var(--fx-grid, none)',
-  position: 'fixed',
+  display: "var(--fx-grid, none)",
+  position: "fixed",
   inset: 0,
   zIndex: 0,
-  pointerEvents: 'none',
+  pointerEvents: "none",
   backgroundImage:
-    'linear-gradient(color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px)',
-  backgroundSize: '36px 36px',
-})
+    "linear-gradient(color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px)",
+  backgroundSize: "36px 36px",
+});
 
 const headerStyle = css({
-  position: 'relative',
+  position: "relative",
   // Above main (zIndex 1): the mobile menu's fixed overlay lives inside the
   // header, so the header must out-stack main for the overlay to cover the
   // game board instead of being trapped beneath it. Kept below the scanlines
   // FX (zIndex 40) so the retro overlay still draws over the header/menu.
   zIndex: 10,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '16px',
-  flexWrap: 'wrap',
-  padding: '16px 24px',
-  borderBottom: 'var(--border-w, 1px) solid var(--border)',
-  background: 'var(--panel)',
-  boxShadow: 'var(--shadow-panel, none)',
-  '@media (max-width: 640px)': {
-    padding: '10px 12px',
-    gap: '12px',
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px",
+  flexWrap: "wrap",
+  padding: "16px 24px",
+  borderBottom: "var(--border-w, 1px) solid var(--border)",
+  background: "var(--panel)",
+  boxShadow: "var(--shadow-panel, none)",
+  "@media (max-width: 640px)": {
+    padding: "10px 12px",
+    gap: "12px",
   },
-})
+});
 
 const desktopClusterStyle = css({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '20px',
-  flexWrap: 'wrap',
-  '@media (max-width: 640px)': { display: 'none' },
-})
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap",
+  "@media (max-width: 640px)": { display: "none" },
+});
 
 const brandStyle = css({
-  fontFamily: 'var(--font-display, var(--font))',
+  fontFamily: "var(--font-display, var(--font))",
   fontWeight: 700,
-  letterSpacing: 'var(--tracking, 0.18em)',
-  fontSize: '18px',
-  color: 'var(--text)',
-  textDecoration: 'none',
-  '@media (max-width: 640px)': {
-    position: 'relative',
+  letterSpacing: "var(--tracking, 0.18em)",
+  fontSize: "18px",
+  color: "var(--text)",
+  textDecoration: "none",
+  "@media (max-width: 640px)": {
+    position: "relative",
     zIndex: 4,
-    textAlign: 'left',
+    textAlign: "left",
   },
-})
+});
 
 const navStyle = css({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '20px',
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  '& a': {
-    color: 'var(--muted)',
-    textDecoration: 'none',
-    transition: 'color 120ms ease',
+  display: "flex",
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  "& a": {
+    color: "var(--muted)",
+    textDecoration: "none",
+    transition: "color 120ms ease",
   },
-  '& a:hover': { color: 'var(--text)' },
-  '@media (max-width: 640px)': { gap: '12px 16px' },
-})
+  "& a:hover": { color: "var(--text)" },
+  "@media (max-width: 640px)": { gap: "12px 16px" },
+});
 
 const ctaStyle = css({
-  padding: '7px 14px',
-  borderRadius: 'var(--radius-sm, 8px)',
-  background: 'var(--accent)',
-  color: 'var(--accent-ink) !important',
-  boxShadow: 'var(--glow, none)',
+  padding: "7px 14px",
+  borderRadius: "var(--radius-sm, 8px)",
+  background: "var(--accent)",
+  color: "var(--accent-ink) !important",
+  boxShadow: "var(--glow, none)",
   fontWeight: 700,
-})
+});
 
 const whoStyle = css({
-  color: 'var(--text)',
+  color: "var(--text)",
   fontWeight: 700,
-  textDecoration: 'none',
-  '&:hover': { color: 'var(--accent)' },
-})
-const logoutFormStyle = css({ margin: 0, display: 'inline-flex' })
+  textDecoration: "none",
+  "&:hover": { color: "var(--accent)" },
+});
+const logoutFormStyle = css({ margin: 0, display: "inline-flex" });
 const linkButtonStyle = css({
-  appearance: 'none',
+  appearance: "none",
   border: 0,
-  background: 'transparent',
-  color: 'var(--muted)',
-  font: 'inherit',
-  cursor: 'pointer',
+  background: "transparent",
+  color: "var(--muted)",
+  font: "inherit",
+  cursor: "pointer",
   padding: 0,
-  '&:hover': { color: 'var(--text)' },
-})
+  "&:hover": { color: "var(--text)" },
+});
 
 const mainStyle = css({
-  position: 'relative',
+  position: "relative",
   zIndex: 1,
   flex: 1,
-  width: '100%',
-  maxWidth: '960px',
-  margin: '0 auto',
-  padding: '32px 24px 64px',
-  '@media (max-width: 640px)': {
-    padding: '20px 16px calc(32px + env(safe-area-inset-bottom))',
+  width: "100%",
+  maxWidth: "960px",
+  margin: "0 auto",
+  padding: "32px 24px 64px",
+  "@media (max-width: 640px)": {
+    padding: "20px 16px calc(32px + env(safe-area-inset-bottom))",
   },
-})
+});

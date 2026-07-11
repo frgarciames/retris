@@ -1,20 +1,20 @@
-import type { Handle } from 'remix/ui'
-import { css } from 'remix/ui'
+import type { Handle } from "remix/ui";
+import { css } from "remix/ui";
 
-import { VersusBoard } from '../assets/versus-board.tsx'
-import { routes } from '../routes.ts'
-import { AppShell, type ShellUser } from './layout.tsx'
-import type { Theme } from './themes.ts'
+import { VersusBoard } from "../assets/versus-board.tsx";
+import { routes } from "../routes.ts";
+import { AppShell, type ShellUser } from "./layout.tsx";
+import type { Theme } from "./themes.ts";
 
 export interface VersusPageProps {
-  user?: ShellUser | null
-  theme?: Theme
-  mode: string
+  user?: ShellUser | null;
+  theme?: Theme;
+  mode: string;
 }
 
 export function VersusPage(handle: Handle<VersusPageProps>) {
   return () => {
-    let { user, theme, mode } = handle.props
+    let { user, theme, mode } = handle.props;
     return (
       <AppShell
         user={user}
@@ -34,22 +34,22 @@ export function VersusPage(handle: Handle<VersusPageProps>) {
           updateHref={routes.versus.update.href()}
         />
       </AppShell>
-    )
-  }
+    );
+  };
 }
 
 const titleStyle = css({
-  margin: '0 0 8px',
-  fontSize: '20px',
-  textAlign: 'center',
-  fontFamily: 'var(--font-display, var(--font))',
-  letterSpacing: 'var(--tracking, 0.04em)',
-})
+  margin: "0 0 8px",
+  fontSize: "20px",
+  textAlign: "center",
+  fontFamily: "var(--font-display, var(--font))",
+  letterSpacing: "var(--tracking, 0.04em)",
+});
 const subtitleStyle = css({
-  margin: '0 auto 24px',
-  maxWidth: '440px',
-  textAlign: 'center',
-  fontSize: '13px',
-  color: 'var(--muted, #8b949e)',
-  '@media (max-width: 640px)': { display: 'none' },
-})
+  margin: "0 auto 24px",
+  maxWidth: "440px",
+  textAlign: "center",
+  fontSize: "13px",
+  color: "var(--muted, #8b949e)",
+  "@media (max-width: 640px)": { display: "none" },
+});
