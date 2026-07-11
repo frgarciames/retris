@@ -1,6 +1,6 @@
 import type { Handle, RemixNode } from 'remix/ui'
-import { css } from 'remix/ui'
 
+import { css } from 'remix/ui'
 import { routes } from '../routes.ts'
 
 export interface DocumentProps {
@@ -23,6 +23,12 @@ export function Document(handle: Handle<DocumentProps>) {
             name="viewport"
             content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
           />
+          <script async src="https://plausible.io/js/pa-kSnxLJOs-rVla-3VXK8xi.js"></script>
+          <script>
+            {/* @ts-ignore */}
+            window.plausible=window.plausible||function(){(window.plausible.q=window.plausible.q||[]).push(arguments)},window.plausible.init=window.plausible.init||function(i){window.plausible.o=i||{}};
+            window.plausible.init()
+          </script>
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <title>{title}</title>
           {head}
