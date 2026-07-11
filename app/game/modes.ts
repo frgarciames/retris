@@ -36,11 +36,11 @@ const CLASSIC_GRAVITY_TICKS = [
 ] as const
 
 export const MODES: Record<string, GameMode> = {
-  sprint40: {
-    id: 'sprint40',
-    label: '40 Lines',
-    goal: { type: 'lines', count: 40 },
-  },
+  //sprint40: {
+  //  id: 'sprint40',
+  //  label: '40 Lines',
+  //  goal: { type: 'lines', count: 40 },
+  //},
   sprint20: {
     id: 'sprint20',
     label: '20 Lines',
