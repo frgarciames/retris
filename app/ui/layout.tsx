@@ -14,6 +14,7 @@ export const FONT_STACK =
 
 export interface ShellUser {
   username: string
+  email?: string | null
 }
 
 export interface AppShellProps {

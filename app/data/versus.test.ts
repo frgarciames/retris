@@ -30,8 +30,8 @@ function matchRow(
 describe('versus leaderboard sorting', () => {
   it('ranks by win rate by default and by total wins on demand', async () => {
     let unique = Date.now()
-    let highRate = await createUser(db, `avgchamp_${unique}`, 'password')
-    let manyWins = await createUser(db, `winschamp_${unique}`, 'password')
+    let highRate = await createUser(db, `avgchamp_${unique}`, `avgchamp_${unique}@example.test`, 'password')
+    let manyWins = await createUser(db, `winschamp_${unique}`, `winschamp_${unique}@example.test`, 'password')
     assert.ok(highRate.ok && manyWins.ok)
     let highId = highRate.user.id
     let manyId = manyWins.user.id
@@ -64,8 +64,8 @@ describe('versus leaderboard sorting', () => {
 
   it('supports ascending order for the chosen sort column', async () => {
     let unique = Date.now() + 1
-    let highRate = await createUser(db, `avgasc_${unique}`, 'password')
-    let manyWins = await createUser(db, `winsasc_${unique}`, 'password')
+    let highRate = await createUser(db, `avgasc_${unique}`, `avgasc_${unique}@example.test`, 'password')
+    let manyWins = await createUser(db, `winsasc_${unique}`, `winsasc_${unique}@example.test`, 'password')
     assert.ok(highRate.ok && manyWins.ok)
     let highId = highRate.user.id
     let manyId = manyWins.user.id

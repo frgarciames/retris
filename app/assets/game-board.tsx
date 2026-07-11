@@ -2,17 +2,31 @@ import { addEventListeners, clientEntry, css, on, type Handle, type Serializable
 
 import {
   createInitialState,
+  levelFor,
   MS_PER_TICK,
   step,
   type GameState,
   type RecordedAction,
 } from '../game/engine.ts'
+import { isSurvivalMode } from '../game/modes.ts'
 import { randomSeed } from '../game/rng.ts'
-import { formatTime } from '../utils/format.ts'
+import { formatClassicScore, formatTime } from '../utils/format.ts'
 import { GameView } from './game-view.tsx'
 import { InputController } from './input.ts'
 import { MobileControls } from './mobile-controls.tsx'
 import { isF4Shortcut, shouldRunF4Shortcut } from './shortcuts.ts'
+
+interface SubmitResult {
+  href?: string
+  pending?: boolean
+  otherPending?: boolean
+  saved?: boolean
+  newBest?: boolean
+  rank?: number | null
+  level?: number
+  duration_ms?: number
+  best?: { level: number; duration_ms: number } | null
+}
 
 interface GameBoardProps extends SerializableProps {
   seed: number
@@ -37,7 +51,8 @@ export const GameBoard = clientEntry(
     let recorded: RecordedAction[] = []
     // 'pending' means the server verified and parked the run for an anonymous
     // player; signing in will save it to their account.
-    let submitState: 'idle' | 'submitting' | 'pending' | 'error' = 'idle'
+    let submitState: 'idle' | 'submitting' | 'done' | 'error' = 'idle'
+    let finishResult: SubmitResult | null = null
     let countdown: number | 'go' | null = 3 // 3 → 2 → 1 → 'go' ("Start!") → null (running)
     // Pausing freezes the tick loop, so the clock (tick * MS_PER_TICK) freezes
     // with it and the recorded replay is unaffected.
@@ -84,6 +99,7 @@ export const GameBoard = clientEntry(
       state = createInitialState(seed, mode)
       recorded = []
       submitState = 'idle'
+      finishResult = null
       paused = false
       input.reset()
       acc = 0
@@ -134,10 +150,18 @@ export const GameBoard = clientEntry(
       }
     }
 
+    function isFinished(): boolean {
+      if (isSurvivalMode(state.mode)) return state.status === 'gameover'
+      return state.status === 'won'
+    }
+
     async function finish() {
-      if (state.status !== 'won') return
+      if (!isFinished()) return
+      if (submitState !== 'idle') return
       let finishedRunVersion = runVersion
+      let survival = isSurvivalMode(state.mode)
       submitState = 'submitting'
+      finishResult = null
       handle.update()
       try {
         let body = new FormData()
@@ -146,16 +170,15 @@ export const GameBoard = clientEntry(
         body.set('actions', JSON.stringify(recorded))
         let res = await fetch(handle.props.submitHref, { method: 'POST', body })
         if (!res.ok) throw new Error(`submit failed: ${res.status}`)
-        let data = (await res.json()) as { href?: string; pending?: boolean }
+        let data = (await res.json()) as SubmitResult
         if (finishedRunVersion !== runVersion) return
-        if (data.href) {
+        if (!survival && data.href) {
           window.location.assign(data.href)
-        } else if (data.pending) {
-          submitState = 'pending'
-          handle.update()
-        } else {
-          throw new Error('unexpected submit response')
+          return
         }
+        finishResult = data
+        submitState = 'done'
+        handle.update()
       } catch {
         if (finishedRunVersion !== runVersion) return
         submitState = 'error'
@@ -215,6 +238,8 @@ export const GameBoard = clientEntry(
       let elapsedMs = state.tick * MS_PER_TICK
       let canUseControls = countdown === null && state.status === 'playing' && !paused
       let showMobileActions = countdown === null && (state.status === 'playing' || paused)
+      let survival = isSurvivalMode(state.mode)
+      let finalLevel = survival ? levelFor(state) : 0
       let overlay =
         countdown !== null ? (
           <div mix={overlayTextStyle}>
@@ -230,23 +255,28 @@ export const GameBoard = clientEntry(
             </button>
             <div mix={overlayMuted}>or press Esc</div>
           </div>
+        ) : survival && state.status === 'gameover' ? (
+          <ClassicFinishOverlay
+            level={finalLevel}
+            elapsedMs={elapsedMs}
+            submitState={submitState}
+            result={finishResult}
+            loginHref={handle.props.loginHref}
+            signupHref={handle.props.signupHref}
+            onTryAgain={restartGame}
+          />
         ) : state.status === 'won' ? (
           <FinishOverlay
             elapsedMs={elapsedMs}
             submitState={submitState}
+            result={finishResult}
             loginHref={handle.props.loginHref}
             signupHref={handle.props.signupHref}
           />
         ) : state.status === 'gameover' ? (
           <div mix={overlayTextStyle}>
             <div mix={overlayBig}>Topped out</div>
-            <button
-              type="button"
-              mix={[
-                resumeBtnStyle,
-                on('click', restartGame),
-              ]}
-            >
+            <button type="button" mix={[resumeBtnStyle, on('click', restartGame)]}>
               Try again
             </button>
           </div>
@@ -286,23 +316,110 @@ export const GameBoard = clientEntry(
   },
 )
 
+function ClassicFinishOverlay(
+  handle: Handle<{
+    level: number
+    elapsedMs: number
+    submitState: string
+    result: SubmitResult | null
+    loginHref: string
+    signupHref: string
+    onTryAgain: () => void
+  }>,
+) {
+  return () => {
+    let { level, elapsedMs, submitState, result, loginHref, signupHref, onTryAgain } = handle.props
+    let score = formatClassicScore(level, elapsedMs)
+
+    if (submitState === 'submitting') {
+      return (
+        <div mix={overlayTextStyle}>
+          <div mix={overlayBig}>Topped out</div>
+          <div mix={overlayMuted}>Saving run…</div>
+        </div>
+      )
+    }
+
+    if (submitState === 'error') {
+      return (
+        <div mix={overlayTextStyle}>
+          <div mix={overlayBig}>Topped out</div>
+          <div mix={overlayMuted}>Could not save run — refresh to retry.</div>
+          <button type="button" mix={[resumeBtnStyle, on('click', onTryAgain)]}>
+            Try again
+          </button>
+        </div>
+      )
+    }
+
+    let newBest = result?.newBest === true
+    let rank = result?.rank
+
+    return (
+      <div mix={overlayTextStyle}>
+        {newBest && rank ? (
+          <div mix={overlayMuted}>
+            You have achieved your best time, your rank now is #{rank}!
+          </div>
+        ) : (
+          <div mix={overlayBig}>Topped out</div>
+        )}
+        <div mix={overlayBig}>{score}</div>
+        {newBest && result?.pending ? (
+          <>
+            <div mix={overlayMuted}>Sign up or Log in to save your run</div>
+            <div mix={overlayActions}>
+              <a href={signupHref} mix={overlayLink}>
+                Sign up
+              </a>
+              <a href={loginHref} mix={overlayLink}>
+                Log in
+              </a>
+            </div>
+          </>
+        ) : null}
+        {!newBest && result?.best ? (
+          <div mix={overlayMuted}>
+            Your best: {formatClassicScore(result.best.level, result.best.duration_ms)}
+          </div>
+        ) : null}
+        <div mix={overlayActions}>
+          {result?.href ? (
+            <a href={result.href} mix={overlayLink}>
+              View replay
+            </a>
+          ) : null}
+          <button type="button" mix={[resumeBtnStyle, on('click', onTryAgain)]}>
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+}
+
 function FinishOverlay(
   handle: Handle<{
     elapsedMs: number
     submitState: string
+    result: SubmitResult | null
     loginHref: string
     signupHref: string
   }>,
 ) {
   return () => {
-    let { elapsedMs, submitState, loginHref, signupHref } = handle.props
+    let { elapsedMs, submitState, result, loginHref, signupHref } = handle.props
     return (
       <div mix={overlayTextStyle}>
         <div mix={overlayLabel}>Finished</div>
         <div mix={overlayBig}>{formatTime(elapsedMs)}</div>
-        {submitState === 'pending' ? (
+        {submitState === 'done' && (result?.pending || result?.otherPending) ? (
           <>
-            <div mix={overlayMuted}>Sign in to save this run to the leaderboard.</div>
+            <div mix={overlayMuted}>
+              {result?.otherPending
+                ? 'You have an unsaved run in this session. Sign in to save it.'
+                : 'Sign in to save this run to the leaderboard.'}
+            </div>
             <div mix={overlayActions}>
               <a href={signupHref} mix={overlayLink}>
                 Sign up

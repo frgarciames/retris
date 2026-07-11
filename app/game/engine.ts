@@ -6,7 +6,7 @@
 // per-tick input list it always produces the same result, so the leaderboard
 // time is computed, never trusted from the client.
 
-import { getMode, type GameMode } from './modes.ts'
+import { getMode, isSurvivalMode, type GameMode } from './modes.ts'
 import {
   cellsFor,
   kicksFor,
@@ -28,9 +28,9 @@ export const GARBAGE_VALUE = 8
 export const TICKS_PER_SECOND = 60
 export const MS_PER_TICK = 1000 / TICKS_PER_SECOND
 
-// How many ticks between automatic gravity drops, and how long a grounded piece
-// waits before locking. Tuned for sprint play where drops are mostly manual.
-const GRAVITY_TICKS = 48
+// How many ticks between automatic gravity drops for sprint modes, and how long a
+// grounded piece waits before locking. Tuned for sprint play where drops are mostly manual.
+const DEFAULT_GRAVITY_TICKS = 48
 const LOCK_DELAY_TICKS = 30
 const SPAWN_X = 3
 const SPAWN_Y = 0
@@ -235,6 +235,28 @@ export function applyGarbageNow(state: GameState, holeColumns: readonly number[]
   }
 }
 
+export function levelForLines(mode: GameMode, linesCleared: number): number {
+  if (!isSurvivalMode(mode) || !mode.speed) return 0
+  return Math.floor(linesCleared / mode.speed.linesPerLevel) + 1
+}
+
+export function levelFor(state: GameState): number {
+  return levelForLines(state.mode, state.linesCleared)
+}
+
+function gravityTicksFor(state: GameState): number {
+  if (!isSurvivalMode(state.mode) || !state.mode.speed) return DEFAULT_GRAVITY_TICKS
+  let level = levelFor(state)
+  let table = state.mode.speed.gravityTicks
+  let idx = Math.min(level - 1, table.length - 1)
+  return table[idx]!
+}
+
+export function isSimulationComplete(mode: GameMode, status: GameStatus): boolean {
+  if (isSurvivalMode(mode)) return status === 'gameover'
+  return status === 'won'
+}
+
 function goalMet(state: GameState): boolean {
   let goal = state.mode.goal
   if (goal.type === 'lines') return state.linesCleared >= goal.count
@@ -337,7 +359,7 @@ export function step(state: GameState, actions: readonly Action[] = []): GameSta
 
   if (state.status === 'playing' && state.active) {
     state.gravityCounter++
-    if (state.gravityCounter >= GRAVITY_TICKS) {
+    if (state.gravityCounter >= gravityTicksFor(state)) {
       state.gravityCounter = 0
       tryMove(state, 0, 1)
     }
@@ -360,12 +382,34 @@ export interface SimulationResult {
   status: GameStatus
   durationMs: number
   linesCleared: number
+  level: number
   finalTick: number
 }
 
 // Default safety cap: a 40-line sprint should finish well within ten minutes of
 // game time even for a slow run.
-const DEFAULT_MAX_TICKS = TICKS_PER_SECOND * 60 * 10
+export const DEFAULT_MAX_TICKS = TICKS_PER_SECOND * 60 * 10
+// Classic survival can last much longer; cap at two hours of game time.
+export const SURVIVAL_MAX_TICKS = TICKS_PER_SECOND * 60 * 120
+
+// How many ticks to simulate after the last recorded input so a piece can lock.
+const REPLAY_TAIL_TICKS = TICKS_PER_SECOND * 30
+
+export function maxTicksForMode(
+  modeId: string,
+  recorded: readonly RecordedAction[] = [],
+): number {
+  let mode = getMode(modeId)
+  if (mode && isSurvivalMode(mode)) {
+    let lastTick = 0
+    for (let { tick } of recorded) {
+      if (tick > lastTick) lastTick = tick
+    }
+    let needed = lastTick + REPLAY_TAIL_TICKS
+    return Math.min(SURVIVAL_MAX_TICKS, Math.max(DEFAULT_MAX_TICKS, needed))
+  }
+  return DEFAULT_MAX_TICKS
+}
 
 // Re-run a recorded game to completion. Used by the server to verify a replay
 // and compute the authoritative duration and line count.
@@ -373,7 +417,7 @@ export function simulate(
   seed: number,
   modeId: string,
   recorded: readonly RecordedAction[],
-  maxTicks: number = DEFAULT_MAX_TICKS,
+  maxTicks: number = maxTicksForMode(modeId, recorded),
 ): SimulationResult {
   let state = createInitialState(seed, modeId)
 
@@ -394,6 +438,7 @@ export function simulate(
     status: state.status,
     durationMs: Math.round(finalTick * MS_PER_TICK),
     linesCleared: state.linesCleared,
+    level: levelFor(state),
     finalTick,
   }
 }

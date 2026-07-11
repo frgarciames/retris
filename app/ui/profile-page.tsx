@@ -41,6 +41,7 @@ export function ProfilePage(handle: Handle<ProfilePageProps>) {
     return (
       <AppShell user={user} theme={theme} title={`${user.username} · Retris`} noindex>
         <h1 mix={titleStyle}>{user.username}</h1>
+        {user.email ? <p mix={emailStyle}>{user.email}</p> : null}
         <p mix={introStyle}>
           Every run you have played — solo sprints and 1v1 matches. Newest first.
         </p>
@@ -128,11 +129,12 @@ function Pager(handle: Handle<{ page: number; pages: number }>) {
 }
 
 const titleStyle = css({
-  margin: '0 0 8px',
+  margin: '0 0 4px',
   fontSize: '24px',
   fontFamily: 'var(--font-display, var(--font))',
   letterSpacing: 'var(--tracking, 0.04em)',
 })
+const emailStyle = css({ margin: '0 0 8px', color: 'var(--muted, #8b949e)', fontSize: '14px' })
 const introStyle = css({ margin: '0 0 8px', color: 'var(--muted, #8b949e)' })
 
 const sectionStyle = css({ marginTop: '32px' })

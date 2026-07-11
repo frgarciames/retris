@@ -3,11 +3,11 @@ import { css } from 'remix/ui'
 
 import { ReplayPlayer } from '../../assets/replay-player.tsx'
 import type { Game } from '../../data/schema.ts'
-import { getMode } from '../../game/modes.ts'
+import { getMode, rankingKind } from '../../game/modes.ts'
 import { routes } from '../../routes.ts'
 import { AppShell } from '../../ui/layout.tsx'
 import type { Theme } from '../../ui/themes.ts'
-import { formatTime } from '../../utils/format.ts'
+import { formatClassicScore, formatTime } from '../../utils/format.ts'
 
 export interface ReplayPageProps {
   game: Game
@@ -19,21 +19,30 @@ export interface ReplayPageProps {
 export function ReplayPage(handle: Handle<ReplayPageProps>) {
   return () => {
     let { game, username, viewer, theme } = handle.props
-    let modeLabel = getMode(game.mode)?.label ?? game.mode
+    let mode = getMode(game.mode)
+    let modeLabel = mode?.label ?? game.mode
+    let isClassic = mode ? rankingKind(mode) === 'levelTime' : false
+    let headline = isClassic
+      ? formatClassicScore(game.level, game.duration_ms)
+      : formatTime(game.duration_ms)
+    let detail = isClassic
+      ? `${username} · ${modeLabel} · ${game.lines_cleared} lines cleared`
+      : `${username} · ${modeLabel} · ${game.lines_cleared} lines`
+    let description = isClassic
+      ? `${username} reached level ${game.level} in ${formatClassicScore(game.level, game.duration_ms)} (${modeLabel}). Watch the full replay on Retris.`
+      : `${username} cleared ${game.lines_cleared} lines in ${formatTime(game.duration_ms)} (${modeLabel}). Watch the full replay on Retris.`
     return (
       <AppShell
         user={viewer}
         theme={theme}
         title={`${username}'s ${modeLabel} run · Retris`}
-        description={`${username} cleared ${game.lines_cleared} lines in ${formatTime(game.duration_ms)} (${modeLabel}). Watch the full replay on Retris.`}
+        description={description}
         canonical={routes.games.show.href({ id: String(game.id) })}
       >
         <div mix={headStyle}>
           <div>
-            <h1 mix={titleStyle}>{formatTime(game.duration_ms)}</h1>
-            <p mix={subStyle}>
-              {username} · {modeLabel} · {game.lines_cleared} lines
-            </p>
+            <h1 mix={titleStyle}>{headline}</h1>
+            <p mix={subStyle}>{detail}</p>
           </div>
         </div>
         <ReplayPlayer seed={game.seed} mode={game.mode} actionsJson={game.actions} />

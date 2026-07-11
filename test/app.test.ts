@@ -7,7 +7,10 @@ import { themeCookie } from '../app/middleware/theme.ts'
 import { router } from '../app/router.ts'
 import { routes } from '../app/routes.ts'
 import { ADMIN_USERNAME } from '../app/utils/admin.ts'
+import { clearSentMails, sentMails } from '../app/mail/index.ts'
+import { verifyPassword } from '../app/utils/passwords.ts'
 import { generateWinningReplay } from './win-replay.ts'
+import { generateGameoverReplay } from './gameover-replay.ts'
 
 const BASE = 'http://localhost'
 const url = (path: string) => BASE + path
@@ -17,9 +20,18 @@ function sessionCookie(res: Response): string {
   return setCookie.split(';')[0]! // "session=..."
 }
 
-async function signup(username: string, password = 'hunter2pass'): Promise<Response> {
+function testEmail(username: string): string {
+  return username.includes('@') ? username : `${username}@example.test`
+}
+
+async function signup(
+  username: string,
+  password = 'hunter2pass',
+  email?: string,
+): Promise<Response> {
   let body = new FormData()
   body.set('username', username)
+  body.set('email', email ?? testEmail(username))
   body.set('password', password)
   return router.fetch(
     new Request(url(routes.auth.signup.action.href()), { method: 'POST', body }),
@@ -44,6 +56,26 @@ describe('auth + game submission', () => {
     let again = await signup('bob')
     assert.equal(again.status, 400)
     assert.match(await again.text(), /taken/i)
+  })
+
+  it('requires email on signup and persists it', async () => {
+    let res = await signup('email-user', 'hunter2pass', 'email-user@example.test')
+    assert.equal(res.status, 303)
+    let user = await findByUsername(db, 'email-user')
+    assert.equal(user?.email, 'email-user@example.test')
+  })
+
+  it('rejects duplicate email', async () => {
+    await signup('user-a', 'hunter2pass', 'dup@example.test')
+    let body = new FormData()
+    body.set('username', 'user-b')
+    body.set('email', 'dup@example.test')
+    body.set('password', 'hunter2pass')
+    let res = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), { method: 'POST', body }),
+    )
+    assert.equal(res.status, 400)
+    assert.match(await res.text(), /email/i)
   })
 
   it('serves the game to anonymous visitors on the home page', async () => {
@@ -81,6 +113,7 @@ describe('auth + game submission', () => {
     // replay page.
     let signupBody = new FormData()
     signupBody.set('username', 'guest-grace')
+    signupBody.set('email', 'guest-grace@example.test')
     signupBody.set('password', 'hunter2pass')
     let signupRes = await router.fetch(
       new Request(url(routes.auth.signup.action.href()), {
@@ -171,7 +204,167 @@ describe('auth + game submission', () => {
   it('serves the public leaderboard page', async () => {
     let res = await router.fetch(new Request(url(routes.leaderboard.href())))
     assert.equal(res.status, 200)
-    assert.match(await res.text(), /Leaderboard/)
+    let html = await res.text()
+    assert.match(html, /Leaderboard/)
+    assert.match(html, /Classic/)
+  })
+})
+
+describe('classic mode submission', () => {
+  async function signupUser(username: string): Promise<string> {
+    return sessionCookie(await signup(username))
+  }
+
+  it('accepts a verified classic gameover for guests with rank', async () => {
+    let replay = generateGameoverReplay(100)
+    let body = new FormData()
+    body.set('seed', String(replay.seed))
+    body.set('mode', replay.mode)
+    body.set('actions', JSON.stringify(replay.actions))
+    let res = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body }),
+    )
+    assert.equal(res.status, 200)
+    let data = (await res.json()) as {
+      pending: boolean
+      newBest: boolean
+      rank: number
+      level: number
+    }
+    assert.equal(data.pending, true)
+    assert.equal(data.newBest, true)
+    assert.equal(data.rank, 1)
+    assert.equal(data.level, replay.level)
+  })
+
+  it('stores only the best classic run per user', async () => {
+    let cookie = await signupUser('classic-ace')
+    let first = generateGameoverReplay(101)
+    let body = new FormData()
+    body.set('seed', String(first.seed))
+    body.set('mode', first.mode)
+    body.set('actions', JSON.stringify(first.actions))
+    let res1 = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body, headers: { cookie } }),
+    )
+    assert.equal(res1.status, 200)
+    let data1 = (await res1.json()) as { saved: boolean; newBest: boolean; rank: number }
+    assert.equal(data1.saved, true)
+    assert.equal(data1.newBest, true)
+    assert.equal(data1.rank, 1)
+
+    let worse = generateGameoverReplay(102)
+    let worseBody = new FormData()
+    worseBody.set('seed', String(worse.seed))
+    worseBody.set('mode', worse.mode)
+    worseBody.set('actions', JSON.stringify(worse.actions))
+    let res2 = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: worseBody,
+        headers: { cookie },
+      }),
+    )
+    let data2 = (await res2.json()) as { saved: boolean; newBest: boolean }
+    assert.equal(data2.saved, false)
+    assert.equal(data2.newBest, false)
+  })
+
+  it('does not replace a sprint pending run with a classic finish', async () => {
+    let sprint = generateWinningReplay(200)
+    let sprintBody = new FormData()
+    sprintBody.set('seed', String(sprint.seed))
+    sprintBody.set('mode', sprint.mode)
+    sprintBody.set('actions', JSON.stringify(sprint.actions))
+    let sprintRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body: sprintBody }),
+    )
+    assert.equal(sprintRes.status, 200)
+    assert.deepEqual(await sprintRes.json(), { pending: true })
+    let cookie = sessionCookie(sprintRes)
+
+    let classic = generateGameoverReplay(201)
+    let classicBody = new FormData()
+    classicBody.set('seed', String(classic.seed))
+    classicBody.set('mode', classic.mode)
+    classicBody.set('actions', JSON.stringify(classic.actions))
+    let classicRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: classicBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(classicRes.status, 200)
+    let classicData = (await classicRes.json()) as { pending: boolean; newBest: boolean }
+    assert.equal(classicData.pending, false)
+    assert.equal(classicData.newBest, false)
+
+    let signupBody = new FormData()
+    signupBody.set('username', 'guest-cls-blocked')
+    signupBody.set('email', 'guest-cls-blocked@example.test')
+    signupBody.set('password', 'hunter2pass')
+    let signupRes = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), {
+        method: 'POST',
+        body: signupBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(signupRes.status, 303)
+    let location = signupRes.headers.get('location') ?? ''
+    assert.match(location, /^\/games\/\d+$/)
+
+    let show = await router.fetch(new Request(url(location)))
+    assert.equal(show.status, 200)
+    let showHtml = await show.text()
+    assert.match(showHtml, /guest-cls-blocked/)
+    assert.match(showHtml, /20 Lines/)
+  })
+
+  it('does not replace a classic pending run with a sprint finish', async () => {
+    let classic = generateGameoverReplay(202)
+    let classicBody = new FormData()
+    classicBody.set('seed', String(classic.seed))
+    classicBody.set('mode', classic.mode)
+    classicBody.set('actions', JSON.stringify(classic.actions))
+    let classicRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), { method: 'POST', body: classicBody }),
+    )
+    assert.equal(classicRes.status, 200)
+    let cookie = sessionCookie(classicRes)
+
+    let sprint = generateWinningReplay(203)
+    let sprintBody = new FormData()
+    sprintBody.set('seed', String(sprint.seed))
+    sprintBody.set('mode', sprint.mode)
+    sprintBody.set('actions', JSON.stringify(sprint.actions))
+    let sprintRes = await router.fetch(
+      new Request(url(routes.games.submit.href()), {
+        method: 'POST',
+        body: sprintBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(sprintRes.status, 200)
+    assert.deepEqual(await sprintRes.json(), { pending: false, otherPending: true })
+
+    let signupBody = new FormData()
+    signupBody.set('username', 'guest-spr-blocked')
+    signupBody.set('email', 'guest-spr-blocked@example.test')
+    signupBody.set('password', 'hunter2pass')
+    let signupRes = await router.fetch(
+      new Request(url(routes.auth.signup.action.href()), {
+        method: 'POST',
+        body: signupBody,
+        headers: { cookie },
+      }),
+    )
+    assert.equal(signupRes.status, 303)
+    let show = await router.fetch(new Request(url(signupRes.headers.get('location') ?? '')))
+    let showHtml = await show.text()
+    assert.match(showHtml, /guest-spr-blocked/)
+    assert.match(showHtml, /Classic/)
   })
 })
 
@@ -300,5 +493,90 @@ describe('admin', () => {
     )
     assert.equal(res.status, 400)
     assert.ok(await findByUsername(db, ADMIN_USERNAME))
+  })
+})
+
+describe('password recovery', () => {
+  function resetTokenFromMail(): string {
+    let html = sentMails.at(-1)?.html ?? ''
+    let match = html.match(/reset-password\/([^"]+)/)
+    assert.ok(match, 'expected reset link in sent mail')
+    return match[1]!
+  }
+
+  it('shows the same forgot-password message whether or not the email exists', async () => {
+    clearSentMails()
+    await signup('forgot-known')
+
+    let knownBody = new FormData()
+    knownBody.set('email', testEmail('forgot-known'))
+    let knownRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: knownBody,
+      }),
+    )
+    assert.equal(knownRes.status, 200)
+    assert.match(await knownRes.text(), /If an account exists/i)
+    assert.equal(sentMails.length, 1)
+
+    let unknownBody = new FormData()
+    unknownBody.set('email', 'nobody@example.test')
+    let unknownRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: unknownBody,
+      }),
+    )
+    assert.equal(unknownRes.status, 200)
+    assert.match(await unknownRes.text(), /If an account exists/i)
+    assert.equal(sentMails.length, 1)
+  })
+
+  it('resets password with a valid token', async () => {
+    clearSentMails()
+    await signup('reset-user', 'old-password')
+
+    let forgotBody = new FormData()
+    forgotBody.set('email', testEmail('reset-user'))
+    let forgotRes = await router.fetch(
+      new Request(url(routes.auth.forgotPassword.action.href()), {
+        method: 'POST',
+        body: forgotBody,
+      }),
+    )
+    assert.equal(forgotRes.status, 200)
+    let token = resetTokenFromMail()
+
+    let resetBody = new FormData()
+    resetBody.set('password', 'new-password')
+    let resetRes = await router.fetch(
+      new Request(url(routes.auth.resetPassword.action.href({ token })), {
+        method: 'POST',
+        body: resetBody,
+      }),
+    )
+    assert.equal(resetRes.status, 303)
+    assert.equal(resetRes.headers.get('location'), routes.auth.login.index.href())
+
+    let user = await findByUsername(db, 'reset-user')
+    assert.ok(user)
+    assert.equal(await verifyPassword('new-password', user.password_hash), true)
+
+    let loginBody = new FormData()
+    loginBody.set('username', 'reset-user')
+    loginBody.set('password', 'new-password')
+    let loginRes = await router.fetch(
+      new Request(url(routes.auth.login.action.href()), { method: 'POST', body: loginBody }),
+    )
+    assert.equal(loginRes.status, 303)
+  })
+
+  it('rejects an invalid reset token', async () => {
+    let res = await router.fetch(
+      new Request(url(routes.auth.resetPassword.index.href({ token: 'not-a-real-token' }))),
+    )
+    assert.equal(res.status, 400)
+    assert.match(await res.text(), /invalid or has expired/i)
   })
 })

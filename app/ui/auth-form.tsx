@@ -8,14 +8,16 @@ import type { Theme } from './themes.ts'
 export interface AuthFormProps {
   mode: 'login' | 'signup'
   error?: string
+  notice?: string
   username?: string
+  email?: string
   returnTo?: string
   theme?: Theme
 }
 
 export function AuthPage(handle: Handle<AuthFormProps>) {
   return () => {
-    let { mode, error, username = '', returnTo, theme } = handle.props
+    let { mode, error, notice, username = '', email = '', returnTo, theme } = handle.props
     let isLogin = mode === 'login'
     let action = isLogin ? routes.auth.login.action.href() : routes.auth.signup.action.href()
     let title = isLogin ? 'Log in' : 'Sign up'
@@ -31,6 +33,11 @@ export function AuthPage(handle: Handle<AuthFormProps>) {
                 {error}
               </p>
             ) : null}
+            {notice ? (
+              <p role="status" mix={noticeStyle}>
+                {notice}
+              </p>
+            ) : null}
             <label mix={labelStyle}>
               <span>Username</span>
               <input
@@ -44,6 +51,19 @@ export function AuthPage(handle: Handle<AuthFormProps>) {
                 mix={inputStyle}
               />
             </label>
+            {!isLogin ? (
+              <label mix={labelStyle}>
+                <span>Email</span>
+                <input
+                  name="email"
+                  type="email"
+                  value={email}
+                  autoComplete="email"
+                  required
+                  mix={inputStyle}
+                />
+              </label>
+            ) : null}
             <label mix={labelStyle}>
               <span>Password</span>
               <input
@@ -58,6 +78,11 @@ export function AuthPage(handle: Handle<AuthFormProps>) {
             <button type="submit" mix={submitStyle}>
               {title}
             </button>
+            {isLogin ? (
+              <p mix={forgotStyle}>
+                <a href={routes.auth.forgotPassword.index.href()}>Forgot password?</a>
+              </p>
+            ) : null}
           </form>
           <p mix={switchStyle}>
             {isLogin ? (
@@ -138,6 +163,23 @@ const errorStyle = css({
   border: '1px solid rgba(255,81,72,0.4)',
   color: '#ff8a84',
   fontSize: '13px',
+})
+
+const noticeStyle = css({
+  margin: 0,
+  padding: '10px 12px',
+  borderRadius: '8px',
+  background: 'rgba(45,172,249,0.12)',
+  border: '1px solid rgba(45,172,249,0.35)',
+  color: 'var(--accent, #2dacf9)',
+  fontSize: '13px',
+})
+
+const forgotStyle = css({
+  margin: 0,
+  textAlign: 'center',
+  fontSize: '13px',
+  '& a': { color: 'var(--accent)', textDecoration: 'none' },
 })
 
 const switchStyle = css({

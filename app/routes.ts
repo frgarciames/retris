@@ -24,6 +24,8 @@ export const routes = route({
     login: form('login'), // GET /auth/login (index) + POST /auth/login (action)
     signup: form('signup'), // GET /auth/signup (index) + POST /auth/signup (action)
     logout: post('logout'), // POST /auth/logout
+    forgotPassword: form('forgot-password'),
+    resetPassword: form('reset-password/:token'),
   }),
 
   games: route('games', {
