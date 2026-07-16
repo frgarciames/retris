@@ -27,6 +27,7 @@ export function Document(handle: Handle<DocumentProps>) {
           />
           <script async src="https://plausible.io/js/pa-kSnxLJOs-rVla-3VXK8xi.js"></script>
           <script innerHTML={PLAUSIBLE_INIT_SCRIPT} />
+          <link rel="icon" href="/favicon.ico" sizes="any" />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <title>{title}</title>
           {head}
