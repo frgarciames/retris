@@ -122,7 +122,7 @@ const layoutStyle = css({
   gap: "20px",
   alignItems: "start",
   justifyContent: "center",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     flex: 1,
     position: "relative",
     gridTemplateColumns: "1fr",
@@ -138,7 +138,7 @@ const sideStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "16px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     gap: "8px",
     width: "84px",
     alignSelf: "start",
@@ -149,7 +149,7 @@ const sideStyle = css({
 const boardWrapStyle = css({
   position: "relative",
   width: "100%",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     zIndex: 1,
     // Size the playfield by available height (capped at full width) so the
     // board plus the touch controls fit on screen without scrolling. The
@@ -173,7 +173,7 @@ const overlayStyle = css({
   borderRadius: "var(--radius-md, 8px)",
   padding: "16px",
   zIndex: 3,
-  "@media (max-width: 640px)": { padding: "12px" },
+  "@media (max-width: 1024px)": { padding: "12px" },
 });
 
 const panelStyle = css({
@@ -185,7 +185,7 @@ const panelStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     padding: "8px",
     gap: "6px",
     background: "rgba(22, 27, 34, 0.56)",
@@ -199,14 +199,14 @@ const panelLabelStyle = css({
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: "var(--muted, #8b949e)",
-  "@media (max-width: 640px)": { fontSize: "9px" },
+  "@media (max-width: 1024px)": { fontSize: "9px" },
 });
 
 const nextListStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: "8px",
@@ -214,7 +214,7 @@ const nextListStyle = css({
 });
 
 const queuePanelStyle = css({
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 
 // Square tile for the single up-next piece.
@@ -227,12 +227,12 @@ const nextUpBoxStyle = css({
   background: "var(--panel-2, #1f2630)",
   border: "var(--border-w, 1px) solid var(--border, #2b333d)",
   borderRadius: "var(--radius-md, 8px)",
-  "@media (max-width: 640px)": { padding: "8px" },
+  "@media (max-width: 1024px)": { padding: "8px" },
 });
 const statBig = css({
   fontSize: "22px",
   fontWeight: 700,
   fontVariantNumeric: "tabular-nums",
-  "@media (max-width: 640px)": { fontSize: "14px" },
+  "@media (max-width: 1024px)": { fontSize: "14px" },
 });
 const statMuted = css({ color: "var(--muted, #8b949e)", fontWeight: 400, fontSize: "15px" });

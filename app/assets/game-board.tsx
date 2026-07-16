@@ -452,7 +452,7 @@ const wrapStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "16px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     minHeight: "calc(100dvh - 120px)",
     gap: "10px",
     userSelect: "none",
@@ -464,7 +464,7 @@ const wrapStyle = css({
 });
 const mobileActionsStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "grid",
     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
     gap: "10px",
@@ -490,7 +490,7 @@ const helpStyle = css({
   textAlign: "center",
   fontSize: "12px",
   color: "var(--muted, #8b949e)",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const overlayTextStyle = css({
   display: "flex",

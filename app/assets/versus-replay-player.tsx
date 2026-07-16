@@ -159,7 +159,7 @@ const boardsStyle = css({
   gridTemplateColumns: "1fr 1fr",
   gap: "24px",
   alignItems: "start",
-  "@media (max-width: 720px)": { gridTemplateColumns: "1fr" },
+  "@media (max-width: 1024px)": { gridTemplateColumns: "1fr" },
 });
 const colStyle = css({ display: "flex", flexDirection: "column", gap: "10px" });
 const nameTagStyle = css({

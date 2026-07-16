@@ -60,7 +60,7 @@ const boardStyle = css({
   boxShadow: "var(--shadow-panel, none)",
   // On mobile the wrapper is sized by height; the board fills it and the
   // 10:20 aspect ratio drives the width.
-  "@media (max-width: 640px)": { padding: "4px", height: "100%", width: "auto" },
+  "@media (max-width: 1024px)": { padding: "4px", height: "100%", width: "auto" },
 });
 
 const cellStyle = css({
@@ -102,7 +102,7 @@ const previewStyle = css({
   gap: "2px",
   width: "72px",
   aspectRatio: "2 / 1",
-  "@media (max-width: 640px)": { width: "60px" },
+  "@media (max-width: 1024px)": { width: "60px" },
 });
 
 const previewLgStyle = css({

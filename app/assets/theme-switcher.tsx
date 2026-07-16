@@ -105,7 +105,7 @@ const switcherStyle = css({
   margin: 0,
   paddingLeft: "20px",
   borderLeft: "var(--border-w, 1px) solid var(--border, #2b333d)",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     justifyContent: "center",
     paddingLeft: 0,
     borderLeft: 0,
@@ -122,7 +122,7 @@ const swatchStyle = css({
   cursor: "pointer",
   transition: "opacity 120ms ease, transform 120ms ease",
   "&:hover": { opacity: 1, transform: "scale(1.12)" },
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     width: "32px",
     height: "32px",
   },

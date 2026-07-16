@@ -149,7 +149,7 @@ const rootStyle = css({
   lineHeight: 1.5,
   display: "flex",
   flexDirection: "column",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     backgroundAttachment: "scroll",
   },
 });
@@ -193,7 +193,7 @@ const headerStyle = css({
   borderBottom: "var(--border-w, 1px) solid var(--border)",
   background: "var(--panel)",
   boxShadow: "var(--shadow-panel, none)",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     padding: "10px 12px",
     gap: "12px",
   },
@@ -204,7 +204,7 @@ const desktopClusterStyle = css({
   alignItems: "center",
   gap: "20px",
   flexWrap: "wrap",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 
 const brandStyle = css({
@@ -214,7 +214,7 @@ const brandStyle = css({
   fontSize: "18px",
   color: "var(--text)",
   textDecoration: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     position: "relative",
     zIndex: 4,
     textAlign: "left",
@@ -233,7 +233,7 @@ const navStyle = css({
     transition: "color 120ms ease",
   },
   "& a:hover": { color: "var(--text)" },
-  "@media (max-width: 640px)": { gap: "12px 16px" },
+  "@media (max-width: 1024px)": { gap: "12px 16px" },
 });
 
 const ctaStyle = css({
@@ -271,7 +271,7 @@ const mainStyle = css({
   maxWidth: "960px",
   margin: "0 auto",
   padding: "32px 24px 64px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     padding: "20px 16px calc(32px + env(safe-area-inset-bottom))",
   },
 });

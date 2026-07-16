@@ -1,6 +1,10 @@
 import { addEventListeners, css, on, type Handle } from "remix/ui";
 
 const SWIPE_MIN = 16;
+// Ignore a second tap that lands too soon after a rotate — players often tap
+// to rotate then immediately touch again to drag, which would otherwise fire
+// a second rotate.
+const DOUBLE_TAP_MS = 320;
 const JOYSTICK_WIDTH = 132;
 const DOT_SIZE = 44;
 const DOT_RADIUS = DOT_SIZE / 2;
@@ -32,6 +36,7 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
   let startY = 0;
   let currentDir: "left" | "right" | "down" | null = null;
   let moved = false;
+  let lastRotateTapAt = 0;
   let dotEl: HTMLElement | null = null;
   let joyRect: { w: number; h: number } = { w: 0, h: 0 };
 
@@ -110,10 +115,15 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
       touchend(event) {
         let target = event.target as HTMLElement | null;
         if (!target?.closest(`[data-joystick="${joystickId}"]`)) return;
+        event.preventDefault();
         releaseJoystick();
         resetDot();
         if (!moved && !handle.props.disabled) {
-          handle.props.onDown();
+          let now = performance.now();
+          if (now - lastRotateTapAt >= DOUBLE_TAP_MS) {
+            lastRotateTapAt = now;
+            handle.props.onDown();
+          }
         }
         moved = false;
       },
@@ -177,7 +187,7 @@ export function MobileControls(handle: Handle<MobileControlsProps>) {
 
 const rootStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "block",
     bottom: "calc(8px + env(safe-area-inset-bottom))",
     zIndex: 3,

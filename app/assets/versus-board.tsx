@@ -645,7 +645,7 @@ const wrapStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "16px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     minHeight: "calc(100dvh - 120px)",
     gap: "10px",
   },
@@ -657,7 +657,7 @@ const arenaStyle = css({
   alignItems: "start",
   // On mobile the rival board is hidden and the player's board goes fullscreen,
   // matching the single-player modes: become a flex column so the board fills.
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "flex",
     flexDirection: "column",
     flex: 1,
@@ -668,13 +668,13 @@ const mainColStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  "@media (max-width: 640px)": { flex: 1, gap: 0, width: "100%" },
+  "@media (max-width: 1024px)": { flex: 1, gap: 0, width: "100%" },
 });
 const oppColStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const nameTagStyle = css({
   fontSize: "11px",
@@ -682,13 +682,13 @@ const nameTagStyle = css({
   textTransform: "uppercase",
   color: "var(--muted, #8b949e)",
   fontWeight: 700,
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const oppMirrorStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "8px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "grid",
     gridTemplateColumns: "92px minmax(0, 1fr)",
     alignItems: "center",
@@ -700,7 +700,7 @@ const oppLinesStyle = css({
   color: "var(--muted, #8b949e)",
   fontVariantNumeric: "tabular-nums",
   textAlign: "center",
-  "@media (max-width: 640px)": { textAlign: "left" },
+  "@media (max-width: 1024px)": { textAlign: "left" },
 });
 const oppPlaceholderStyle = css({
   aspectRatio: `${COLS} / ${ROWS}`,
@@ -712,7 +712,7 @@ const oppPlaceholderStyle = css({
   border: "var(--border-w, 1px) solid var(--border, #2b333d)",
   borderRadius: "var(--radius-md, 8px)",
   background: "#0a0d12",
-  "@media (max-width: 640px)": { width: "92px" },
+  "@media (max-width: 1024px)": { width: "92px" },
 });
 
 const helpStyle = css({
@@ -720,12 +720,12 @@ const helpStyle = css({
   textAlign: "center",
   fontSize: "12px",
   color: "var(--muted, #8b949e)",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const controlsStyle = css({
   display: "flex",
   justifyContent: "center",
-  "@media (max-width: 640px)": { justifyContent: "stretch" },
+  "@media (max-width: 1024px)": { justifyContent: "stretch" },
 });
 const surrenderBtnStyle = css({
   appearance: "none",
@@ -737,7 +737,7 @@ const surrenderBtnStyle = css({
   padding: "8px 18px",
   background: "transparent",
   color: "var(--danger, #ff6b6b)",
-  "@media (max-width: 640px)": { width: "100%", minHeight: "44px" },
+  "@media (max-width: 1024px)": { width: "100%", minHeight: "44px" },
 });
 
 const overlayTextStyle = css({

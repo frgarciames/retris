@@ -109,7 +109,7 @@ export const MobileHeaderMenu = clientEntry(
 
 const mobileMenuStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "block",
     position: "relative",
     zIndex: 4,
@@ -118,7 +118,7 @@ const mobileMenuStyle = css({
 
 const mobileMenuButtonStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "grid",
     gap: "4px",
     width: "32px",
@@ -141,7 +141,7 @@ const mobileMenuButtonStyle = css({
 });
 
 const mobileMenuButtonOpenStyle = css({
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     background: "color-mix(in srgb, var(--accent) 20%, transparent)",
     borderColor: "var(--accent)",
   },
@@ -149,7 +149,7 @@ const mobileMenuButtonOpenStyle = css({
 
 const mobileMenuOverlayStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "flex",
     position: "fixed",
     inset: 0,
@@ -162,7 +162,7 @@ const mobileMenuOverlayStyle = css({
 
 const mobileMenuPanelStyle = css({
   display: "none",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     display: "flex",
     flex: 1,
     flexDirection: "column",

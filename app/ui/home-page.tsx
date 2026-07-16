@@ -74,7 +74,7 @@ const titleStyle = css({
   textAlign: "center",
   fontFamily: "var(--font-display, var(--font))",
   letterSpacing: "var(--tracking, 0.04em)",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const modeRowStyle = css({
   display: "flex",
@@ -82,7 +82,7 @@ const modeRowStyle = css({
   flexWrap: "wrap",
   gap: "12px",
   margin: "0 0 20px",
-  "@media (max-width: 640px)": {
+  "@media (max-width: 1024px)": {
     justifyContent: "center",
     margin: "0 0 10px",
   },
@@ -115,6 +115,6 @@ const anonHintStyle = css({
   textAlign: "center",
   fontSize: "12px",
   color: "var(--muted, #8b949e)",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
 const hintLinkStyle = css({ color: "var(--accent, #2dacf9)", textDecoration: "none" });

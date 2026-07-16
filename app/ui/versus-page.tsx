@@ -51,5 +51,5 @@ const subtitleStyle = css({
   textAlign: "center",
   fontSize: "13px",
   color: "var(--muted, #8b949e)",
-  "@media (max-width: 640px)": { display: "none" },
+  "@media (max-width: 1024px)": { display: "none" },
 });
